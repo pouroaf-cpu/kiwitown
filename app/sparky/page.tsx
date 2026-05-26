@@ -1,3 +1,5 @@
+export const preferredRegion = "syd1";
+
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SparkyDashboard from "./dashboard";
@@ -23,23 +25,23 @@ export default async function SparkyPage() {
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
-  // Current month entry
-  const { data: kpiEntry } = await supabase
-    .from("kpi_entries")
-    .select("*")
-    .eq("sparky_id", profile.id)
-    .eq("month", month)
-    .eq("year", year)
-    .maybeSingle();
-
-  // Last 6 months of entries for history
-  const { data: history } = await supabase
-    .from("kpi_entries")
-    .select("month, year, score, bonus_earned")
-    .eq("sparky_id", profile.id)
-    .order("year", { ascending: false })
-    .order("month", { ascending: false })
-    .limit(6);
+  // Fetch current entry + 6-month history in parallel
+  const [{ data: kpiEntry }, { data: history }] = await Promise.all([
+    supabase
+      .from("kpi_entries")
+      .select("*")
+      .eq("sparky_id", profile.id)
+      .eq("month", month)
+      .eq("year", year)
+      .maybeSingle(),
+    supabase
+      .from("kpi_entries")
+      .select("month, year, score, bonus_earned")
+      .eq("sparky_id", profile.id)
+      .order("year", { ascending: false })
+      .order("month", { ascending: false })
+      .limit(6),
+  ]);
 
   return (
     <SparkyDashboard
