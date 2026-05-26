@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type Step = "phone" | "otp";
+type Step = "email" | "otp";
 
 export default function LoginPage() {
-  const [step, setStep] = useState<Step>("phone");
-  const [phone, setPhone] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,14 +19,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    // Normalise NZ numbers → E.164
-    const normalised = phone.startsWith("+")
-      ? phone
-      : `+64${phone.replace(/^0/, "")}`;
-
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: normalised,
-    });
+    const { error } = await supabase.auth.signInWithOtp({ email });
 
     if (error) {
       setError(error.message);
@@ -41,20 +34,15 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const normalised = phone.startsWith("+")
-      ? phone
-      : `+64${phone.replace(/^0/, "")}`;
-
     const { error } = await supabase.auth.verifyOtp({
-      phone: normalised,
+      email,
       token: otp,
-      type: "sms",
+      type: "email",
     });
 
     if (error) {
       setError(error.message);
     } else {
-      // Middleware will redirect to role-appropriate dashboard
       window.location.href = "/";
     }
     setLoading(false);
@@ -77,7 +65,13 @@ export default function LoginPage() {
               fill="white"
               opacity="0.9"
             />
-            <path d="M12 16L15 19L20 13" stroke="#0B0D12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M12 16L15 19L20 13"
+              stroke="#0B0D12"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">
@@ -88,23 +82,24 @@ export default function LoginPage() {
 
       {/* Card */}
       <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6">
-        {step === "phone" ? (
+        {step === "email" ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                Mobile number
+                Email address
               </label>
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="021 000 0000"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
                 autoFocus
+                autoComplete="email"
                 className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text-primary text-base placeholder:text-muted focus:outline-none focus:border-brand transition-colors"
               />
               <p className="text-xs text-muted mt-2">
-                NZ numbers — we'll add +64 automatically
+                We&apos;ll send you a 6-digit sign-in code
               </p>
             </div>
 
@@ -116,7 +111,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || !phone}
+              disabled={loading || !email}
               className="w-full bg-brand text-white font-semibold py-3 rounded-xl disabled:opacity-50 active:scale-95 transition-transform"
             >
               {loading ? "Sending…" : "Send code"}
@@ -127,13 +122,13 @@ export default function LoginPage() {
             <div>
               <button
                 type="button"
-                onClick={() => { setStep("phone"); setError(""); setOtp(""); }}
+                onClick={() => { setStep("email"); setError(""); setOtp(""); }}
                 className="flex items-center gap-1 text-sm text-text-secondary mb-4 active:opacity-70"
               >
-                ← Change number
+                ← Change email
               </button>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                Enter the 6-digit code sent to {phone}
+                Enter the 6-digit code sent to {email}
               </label>
               <input
                 type="number"
@@ -167,7 +162,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleSendOtp}
               disabled={loading}
-              className="w-full text-sm text-text-secondary py-2"
+              className="w-full text-sm text-text-secondary py-2 active:opacity-70"
             >
               Resend code
             </button>

@@ -3,46 +3,60 @@
 ## Last Agent
 - Agent: Claude Code
 - Date: 2026-05-26
-- Status: ✅ Foreman dashboard redesigned from Anthropic design file — ready for Supabase credentials
+- Status: ✅ Admin + Sparky dashboards wired to Supabase; all API routes built
 
 ## What Was Built This Session
-### Foreman dashboard — full redesign from design file
-- `app/foreman/page.tsx` — converted to server component; fetches auth user + profile from Supabase, reads existing weekly submission for current week, passes everything down to client
-- `app/foreman/dashboard.tsx` — new client component (full pixel-match of design):
-  - 5 categories with distinct colours: Operations (#00AEEF), Quality (#2ECC71), Finance (#F5A623), Safety (#F5821F), People (#A78BFA)
-  - 10 checklist items (updated from old 4-category/10-item structure)
-  - SVG progress ring with glow layers, animates, turns green + pulse at 100%, shows checkmark
-  - Category group headers with colour bar, item count, subtly divided rows
-  - Check rows: category dot, label (grays when checked, bg tints), glowing check circle with category colour + pop animation
-  - Collapsible weekly reflection (5 note fields, badge shows filled count)
-  - Sticky glass-blur header
-  - Mobile: hamburger → left drawer (profile card, nav pills, week progress bar)
-  - Desktop (768px+): horizontal nav with logo, pills, week number, avatar
-  - Profile panel (right slide-in): avatar, stats, display name editor, role/company, save, sign out (wired to Supabase signOut)
-  - Toast notifications (success/warning/error)
-  - Offline banner
-  - localStorage persistence for in-progress state (Monday reset logic)
-  - Submit calls `/api/weekly-submission` (server-side)
-- `app/api/weekly-submission/route.ts` — POST upserts to weekly_submissions (idempotent per week), GET returns history; role-gated (foreman only)
-- `app/layout.tsx` — added Barlow Condensed (600/700/800) + Satisfy via next/font, exposed as CSS vars
-- `app/globals.css` — added checkPop / fadeUp / toastDrop / kePulse keyframes, .check-pop / .fade-up / .toast-anim / .ring-pulse classes, .row-btn / .submit-btn / .cat-header-btn helper classes, custom scrollbar
+### Admin dashboard — real Supabase data
+- `app/admin/page.tsx` — server component; fetches admin profile, all profiles, current month KPI entries
+- `app/admin/dashboard.tsx` — client component:
+  - Two tabs: Team | KPIs
+  - Team tab: stats row (total/foremen/sparkies), full user list with tappable role badges
+  - Role assignment bottom sheet: pick admin/foreman/sparky/none → PATCH /api/users
+  - KPIs tab: month navigation (prev/next), sparky list with score bars + bonus
+  - KPI entry bottom sheet: 4 fields (charge out %, job cards, callbacks, timesheets days), live score preview, POST /api/kpi
+  - Toast notifications, sign out
+
+### Sparky dashboard — real Supabase data
+- `app/sparky/page.tsx` — server component; fetches sparky profile, current month KPI entry, 6-month history
+- `app/sparky/dashboard.tsx` — client component:
+  - Animated score bar (CSS transition on mount)
+  - Score /100 + bonus earned (green)
+  - 4 KPI cards: real values, status dot (green/yellow/red vs targets), target labels
+  - 6-month history bar chart (score + bonus per month)
+  - "No data yet" state with explanation
+  - Sign out
+
+### API routes
+- `app/api/users/route.ts` — GET all profiles (admin only), PATCH role assignment
+- `app/api/kpi/route.ts` — POST upsert KPI entry with auto-calculated score + bonus (admin only), GET for sparky own history or admin all
+
+### Type fix
+- `lib/types.ts` — `Profile.role` changed from `UserRole` to `UserRole | null` (DB column is nullable)
+
+## Supabase Status
+- Project: mpggkixpvyrupmqnamgl.supabase.co (on separate Supabase account — MCP cannot access)
+- .env.local: ✅ configured with real credentials
+- SQL schema (001_initial.sql): ✅ run by user
+- Phone Auth: ❓ needs enabling in Supabase → Authentication → Providers → Phone
+- Vercel env vars: ❓ needs confirming
+
+## Score Formula (in /api/kpi and admin dashboard preview)
+- charge_out: min(value/85 × 100, 100) × 0.25
+- job_cards: min(value/20 × 100, 100) × 0.25
+- callbacks: max(0, (1 − value/5) × 100) × 0.25
+- timesheets_days: min(value/10 × 100, 100) × 0.25
+- Bonus = (score/100) × (annual_salary/12) × (bonus_pct/100)
 
 ## What's Still Needed
-- [ ] Add Supabase credentials to .env.local (copy .env.local.example, fill in values)
-- [ ] Add Supabase credentials to Vercel environment variables
-- [ ] Run supabase/migrations/001_initial.sql in Supabase SQL Editor
 - [ ] Enable Phone Auth in Supabase → Authentication → Providers → Phone
+- [ ] Add Supabase credentials to Vercel environment variables (if not done)
 - [ ] Generate/add PWA icons: public/icons/icon-192x192.png + icon-512x512.png
-- [ ] Wire up /admin to real Supabase user data (role assignment, user list, stats)
-- [ ] Wire up /sparky to real kpi_entries data
-- [ ] Build admin KPI entry form (/api/kpi route)
-
-## Database schema note
-- The design file used `foreman_submissions` with `foreman_name` — our actual table is `weekly_submissions` with `foreman_id` (FK to profiles). API route handles this correctly.
-- `weekly_submissions` has unique constraint on (foreman_id, week_number, year) — submit is an upsert, idempotent.
+- [ ] First admin user: after signing in with phone OTP, manually set role='admin' in Supabase Table Editor → profiles
+- [ ] Team avg score on sparky dashboard (needs a SECURITY DEFINER Postgres function — currently shows individual data only due to RLS)
 
 ## Next Actions
-- [ ] Configure Supabase credentials (biggest unblock)
-- [ ] Design/implement admin dashboard (real user data, role assignment)
-- [ ] Design/implement sparky KPI dashboard (real kpi_entries data)
+- [ ] Enable Phone Auth (biggest functional unblock)
+- [ ] Set first admin manually in Supabase Table Editor
+- [ ] Test end-to-end: login → admin assigns roles → admin enters KPIs → sparky sees their score
 - [ ] Push notifications for weekly reminders (Supabase Edge Functions or Vercel Cron)
+- [ ] PWA icons
