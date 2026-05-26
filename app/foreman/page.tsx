@@ -15,7 +15,7 @@ function getWeekInfo(): { weekNum: number; year: number } {
 }
 
 export default async function ForemanPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

@@ -4,7 +4,7 @@ import SparkyDashboard from "./dashboard";
 import type { KpiEntry } from "@/lib/types";
 
 export default async function SparkyPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

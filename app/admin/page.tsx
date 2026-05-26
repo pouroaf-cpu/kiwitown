@@ -4,7 +4,7 @@ import AdminDashboard from "./dashboard";
 import type { Profile, KpiEntry } from "@/lib/types";
 
 export default async function AdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },

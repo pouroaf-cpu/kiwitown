@@ -15,7 +15,7 @@ function calcScore(
 }
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
