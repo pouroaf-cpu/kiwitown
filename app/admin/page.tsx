@@ -1,3 +1,5 @@
+export const preferredRegion = "syd1";
+
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AdminDashboard from "./dashboard";
@@ -19,22 +21,24 @@ export default async function AdminPage() {
 
   if (!profile || profile.role !== "admin") redirect("/pending");
 
-  const { data: allProfiles, error: profilesError } = await supabase
-    .rpc("admin_get_profiles");
-
-  if (profilesError) {
-    console.error("[admin] profiles error:", profilesError.message, profilesError.code);
-  }
-
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
-  const { data: kpiEntries } = await supabase
-    .from("kpi_entries")
-    .select("*")
-    .eq("month", month)
-    .eq("year", year);
+  // Fetch all profiles + current-month KPIs in parallel
+  const [{ data: allProfiles, error: profilesError }, { data: kpiEntries }] =
+    await Promise.all([
+      supabase.rpc("admin_get_profiles"),
+      supabase
+        .from("kpi_entries")
+        .select("*")
+        .eq("month", month)
+        .eq("year", year),
+    ]);
+
+  if (profilesError) {
+    console.error("[admin] profiles error:", profilesError.message, profilesError.code);
+  }
 
   return (
     <AdminDashboard

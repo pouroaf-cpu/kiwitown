@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const preferredRegion = "syd1";
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
