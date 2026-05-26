@@ -680,28 +680,27 @@ export default function ForemanDashboard({ foremanName, profileId, weekNum, year
       }}>
         <OfflineBanner />
         {isDesktop ? (
-          /* Desktop nav */
+          /* Desktop nav — global links so any role can navigate */
           <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", padding: "0 32px", height: 56, gap: 0 }}>
             <KELogo />
             <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 36 }}>
-              {NAV_ITEMS.map(item => (
-                <button key={item.id} disabled={item.coming} style={{
+              {[
+                { href: "/admin",   label: "Admin",     active: false },
+                { href: "/foreman", label: "Checklist", active: true  },
+                { href: "/sparky",  label: "Sparky",    active: false },
+              ].map(item => (
+                <a key={item.href} href={item.href} style={{
                   display: "flex", alignItems: "center", gap: 7,
-                  padding: "7px 14px", borderRadius: 8,
+                  padding: "7px 14px", borderRadius: 8, textDecoration: "none",
                   background: item.active ? "rgba(0,174,239,0.1)" : "none",
                   border: item.active ? "1px solid rgba(0,174,239,0.18)" : "1px solid transparent",
                   color: item.active ? "#DCE8F0" : "#445566",
-                  cursor: item.coming ? "default" : "pointer",
-                  opacity: item.coming ? 0.4 : 1,
+                  cursor: "pointer",
                   fontFamily: "var(--font-dm-sans), sans-serif", fontWeight: 500, fontSize: 13,
                   transition: "background 0.15s, border-color 0.15s",
                 }}>
-                  <NavIco id={item.id} active={item.active} />
                   {item.label}
-                  {item.coming && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: "#334455", background: "rgba(255,255,255,0.06)", padding: "1px 5px", borderRadius: 3, textTransform: "uppercase", letterSpacing: "0.06em" }}>Soon</span>
-                  )}
-                </button>
+                </a>
               ))}
             </div>
             <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
