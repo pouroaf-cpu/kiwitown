@@ -17,7 +17,7 @@ export default async function SparkyPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!profile || profile.role !== "sparky") redirect("/pending");
+  if (!profile || (profile.role !== "sparky" && profile.role !== "admin")) redirect("/pending");
 
   const now = new Date();
   const month = now.getMonth() + 1;

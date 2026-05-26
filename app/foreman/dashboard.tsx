@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import BottomNav from "@/components/BottomNav";
 
 /* ═══════════════════════════════════════════════════════════════
    TYPES
@@ -811,6 +812,7 @@ export default function ForemanDashboard({ foremanName, profileId, weekNum, year
         </div>
       </div>
 
+      <BottomNav />
     </div>
   );
 }

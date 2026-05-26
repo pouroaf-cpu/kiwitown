@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, KpiEntry } from "@/lib/types";
+import BottomNav from "@/components/BottomNav";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -232,7 +233,7 @@ export default function AdminDashboard({
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-24">
+    <div className="min-h-screen bg-bg pb-32">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-bg/80 backdrop-blur-xl border-b border-border px-4 py-4">
         <div className="flex items-center justify-between">
@@ -249,7 +250,7 @@ export default function AdminDashboard({
         </div>
       </div>
 
-      {/* Tab bar */}
+      {/* Section switcher */}
       <div className="flex gap-2 px-4 pt-4 pb-2">
         {(["team", "kpis"] as const).map((tab) => (
           <button
@@ -573,7 +574,7 @@ export default function AdminDashboard({
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed bottom-8 left-4 right-4 z-50 px-4 py-3 rounded-2xl text-sm font-medium text-center shadow-xl ${
+          className={`fixed bottom-24 left-4 right-4 z-50 px-4 py-3 rounded-2xl text-sm font-medium text-center shadow-xl ${
             toast.type === "success"
               ? "bg-green-500/90 text-white"
               : "bg-red-500/90 text-white"
@@ -582,6 +583,8 @@ export default function AdminDashboard({
           {toast.msg}
         </div>
       )}
+
+      <BottomNav />
     </div>
   );
 }

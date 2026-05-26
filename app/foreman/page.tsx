@@ -24,11 +24,11 @@ export default async function ForemanPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, name, phone")
+    .select("id, name, phone, role")
     .eq("user_id", user.id)
     .single();
 
-  if (!profile) redirect("/pending");
+  if (!profile || (profile.role !== "foreman" && profile.role !== "admin")) redirect("/pending");
 
   const { weekNum, year } = getWeekInfo();
 

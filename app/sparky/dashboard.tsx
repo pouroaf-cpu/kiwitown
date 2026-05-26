@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { KpiEntry } from "@/lib/types";
+import BottomNav from "@/components/BottomNav";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -112,7 +113,7 @@ export default function SparkyDashboard({
   const monthLabel = `${MONTHS[currentMonth - 1]} ${currentYear}`;
 
   return (
-    <div className="min-h-screen bg-bg pb-24">
+    <div className="min-h-screen bg-bg pb-32">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-bg/80 backdrop-blur-xl border-b border-border px-4 py-4">
         <div className="flex items-center justify-between">
@@ -262,6 +263,8 @@ export default function SparkyDashboard({
           </div>
         )}
       </div>
+
+      <BottomNav />
     </div>
   );
 }
