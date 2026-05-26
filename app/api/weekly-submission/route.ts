@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  if (profile.role !== "foreman") {
+  if (profile.role !== "foreman" && profile.role !== "admin") {
     return NextResponse.json({ error: "Only foremen can submit weekly check-ins" }, { status: 403 });
   }
 
