@@ -45,3 +45,5 @@ public/worker-*.js.map
 
 # local env
 .env
+
+.vercel

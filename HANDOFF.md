@@ -3,39 +3,46 @@
 ## Last Agent
 - Agent: Claude Code
 - Date: 2026-05-26
-- Status: ✅ Live at https://kiwitown.vercel.app — ready for Supabase credentials + icons
+- Status: ✅ Foreman dashboard redesigned from Anthropic design file — ready for Supabase credentials
 
-## What Was Built
-- Next.js 14 App Router project initialised
-- Tailwind CSS with brand colours (#00AEEF, #0B0D12) and DM Sans font
-- @ducanh2912/next-pwa configured — manifest.json, service worker on build
-- @supabase/ssr + supabase-js installed
-- lib/supabase/client.ts + server.ts (cookie-based SSR auth)
-- middleware.ts — protects all routes, redirects unauthenticated users to /login
-- Role-based routing: / → reads profile.role → redirects to /admin /foreman /sparky
-- Pages:
-  - /login — phone number entry → OTP verify (NZ numbers auto-prefixed +64)
-  - /pending — shown to users with no role assigned yet
-  - /foreman — weekly checklist (10 items, 4 categories), progress ring, notes, submit
-  - /sparky — KPI score card, bonus tracker, 4 KPI metric cards
-  - /admin — user list with role badges, monthly overview placeholder
-- supabase/migrations/001_initial.sql — full schema (profiles, weekly_submissions, kpi_entries) with RLS policies
-- .env.local.example with required vars
-- GitHub repo: https://github.com/pouroaf-cpu/kiwitown (pushed)
-- Vercel: deployed to team_YV45ydmmAkdW13akUOvAsuIO
+## What Was Built This Session
+### Foreman dashboard — full redesign from design file
+- `app/foreman/page.tsx` — converted to server component; fetches auth user + profile from Supabase, reads existing weekly submission for current week, passes everything down to client
+- `app/foreman/dashboard.tsx` — new client component (full pixel-match of design):
+  - 5 categories with distinct colours: Operations (#00AEEF), Quality (#2ECC71), Finance (#F5A623), Safety (#F5821F), People (#A78BFA)
+  - 10 checklist items (updated from old 4-category/10-item structure)
+  - SVG progress ring with glow layers, animates, turns green + pulse at 100%, shows checkmark
+  - Category group headers with colour bar, item count, subtly divided rows
+  - Check rows: category dot, label (grays when checked, bg tints), glowing check circle with category colour + pop animation
+  - Collapsible weekly reflection (5 note fields, badge shows filled count)
+  - Sticky glass-blur header
+  - Mobile: hamburger → left drawer (profile card, nav pills, week progress bar)
+  - Desktop (768px+): horizontal nav with logo, pills, week number, avatar
+  - Profile panel (right slide-in): avatar, stats, display name editor, role/company, save, sign out (wired to Supabase signOut)
+  - Toast notifications (success/warning/error)
+  - Offline banner
+  - localStorage persistence for in-progress state (Monday reset logic)
+  - Submit calls `/api/weekly-submission` (server-side)
+- `app/api/weekly-submission/route.ts` — POST upserts to weekly_submissions (idempotent per week), GET returns history; role-gated (foreman only)
+- `app/layout.tsx` — added Barlow Condensed (600/700/800) + Satisfy via next/font, exposed as CSS vars
+- `app/globals.css` — added checkPop / fadeUp / toastDrop / kePulse keyframes, .check-pop / .fade-up / .toast-anim / .ring-pulse classes, .row-btn / .submit-btn / .cat-header-btn helper classes, custom scrollbar
 
 ## What's Still Needed
 - [ ] Add Supabase credentials to .env.local (copy .env.local.example, fill in values)
 - [ ] Add Supabase credentials to Vercel environment variables
-- [ ] Run supabase/migrations/001_initial.sql in your Supabase SQL Editor
-- [ ] Generate/add PWA icons: public/icons/icon-192x192.png + icon-512x512.png
+- [ ] Run supabase/migrations/001_initial.sql in Supabase SQL Editor
 - [ ] Enable Phone Auth in Supabase → Authentication → Providers → Phone
-- [ ] Wire up /api/weekly-submission POST route (foreman submit)
-- [ ] Wire up /api/kpi admin entry form
-- [ ] Wire up admin role assignment (currently placeholder UI)
+- [ ] Generate/add PWA icons: public/icons/icon-192x192.png + icon-512x512.png
+- [ ] Wire up /admin to real Supabase user data (role assignment, user list, stats)
+- [ ] Wire up /sparky to real kpi_entries data
+- [ ] Build admin KPI entry form (/api/kpi route)
+
+## Database schema note
+- The design file used `foreman_submissions` with `foreman_name` — our actual table is `weekly_submissions` with `foreman_id` (FK to profiles). API route handles this correctly.
+- `weekly_submissions` has unique constraint on (foreman_id, week_number, year) — submit is an upsert, idempotent.
 
 ## Next Actions
-- [ ] Add real data connections once Supabase is configured
-- [ ] Build out admin KPI entry form
-- [ ] Build foreman submission API route
-- [ ] Add push notifications for weekly reminders
+- [ ] Configure Supabase credentials (biggest unblock)
+- [ ] Design/implement admin dashboard (real user data, role assignment)
+- [ ] Design/implement sparky KPI dashboard (real kpi_entries data)
+- [ ] Push notifications for weekly reminders (Supabase Edge Functions or Vercel Cron)
