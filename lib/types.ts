@@ -5,7 +5,7 @@ export interface Profile {
   user_id: string;
   name: string;
   phone: string;
-  role: UserRole;
+  role: UserRole | null;
   salary: number;
   bonus_pct: number;
   created_at: string;
