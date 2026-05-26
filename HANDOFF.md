@@ -3,7 +3,7 @@
 ## Last Agent
 - Agent: Claude Code
 - Date: 2026-05-26
-- Status: Initial scaffold complete — ready for Supabase credentials + icons
+- Status: ✅ Live at https://kiwitown.vercel.app — ready for Supabase credentials + icons
 
 ## What Was Built
 - Next.js 14 App Router project initialised
