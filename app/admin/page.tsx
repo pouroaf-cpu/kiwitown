@@ -19,10 +19,12 @@ export default async function AdminPage() {
 
   if (!profile || profile.role !== "admin") redirect("/pending");
 
-  const { data: allProfiles } = await supabase
-    .from("profiles")
-    .select("id, user_id, name, phone, role, salary, bonus_pct, created_at")
-    .order("created_at", { ascending: true });
+  const { data: allProfiles, error: profilesError } = await supabase
+    .rpc("admin_get_profiles");
+
+  if (profilesError) {
+    console.error("[admin] profiles error:", profilesError.message, profilesError.code);
+  }
 
   const now = new Date();
   const month = now.getMonth() + 1;
