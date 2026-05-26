@@ -19,11 +19,13 @@ export default async function RootPage() {
     .maybeSingle();
 
   if (profileError) {
-    console.error("[root] profile query error:", profileError.message, profileError.code);
+    console.error("[root] ERR_CODE:", profileError.code);
+    console.error("[root] ERR_MSG:", profileError.message);
+    console.error("[root] ERR_HINT:", profileError.hint);
   }
 
   if (!profile?.role) {
-    console.error("[root] no role — user:", user.id, "profile:", profile, "error:", profileError?.message);
+    console.error("[root] PENDING — uid:", user.id, "profile_null:", profile === null, "role:", profile?.role);
     redirect("/pending");
   }
 
