@@ -12,13 +12,18 @@ export default async function RootPage() {
   if (!user) redirect("/login");
 
   // Fetch profile to determine role
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("[root] profile query error:", profileError.message, profileError.code);
+  }
 
   if (!profile?.role) {
+    console.error("[root] no role — user:", user.id, "profile:", profile, "error:", profileError?.message);
     redirect("/pending");
   }
 
