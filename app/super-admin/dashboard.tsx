@@ -64,7 +64,7 @@ export default function SuperAdminDashboard({ viewer, initialSettings, initialSt
             <div className="border-b border-border p-5"><p className="text-xs uppercase tracking-widest text-brand">Role control</p><h2 className="mt-2 text-xl font-semibold">Access assignments</h2></div>
             {staff.map((member) => (
               <div className="flex flex-col gap-3 border-b border-border p-4 last:border-0 sm:flex-row sm:items-center" key={member.id}>
-                <div className="flex-1"><p>{member.name || "Pending profile"}</p><p className="text-xs text-text-secondary">{member.phone}</p></div>
+                <div className="flex-1"><p>{member.name || "Pending profile"}</p><p className="text-xs text-text-secondary">{member.email || member.phone || "No email recorded"}</p></div>
                 <select className="field !w-auto min-w-44" value={member.role || ""} onChange={(event) => setRole(member.id, (event.target.value || null) as UserRole | null)}>
                   <option value="">Pending</option>
                   <option value="super_admin">Super admin</option>

@@ -3,7 +3,7 @@
 ## Product Direction
 - Kiwitown KPI is a mobile-first PWA for Kiwitown Electrical, with a dark industrial design and `#00AEEF` primary colour.
 - Role model is `super_admin`, `coo`, `foreman`, `sparky`; legacy `admin` is replaced by `coo`.
-- Authentication is Supabase phone OTP. A verified account remains pending until assigned a role.
+- Authentication is Supabase email/password. A registered account remains pending until assigned a role.
 
 ## Architecture Decisions
 - Next.js was upgraded from 14.2.35 to 15.5.18 because Next 14 had unresolved high-severity advisories during implementation.
@@ -22,6 +22,6 @@
 
 ## Verification State
 - Type checking, lint, production build and npm audit pass (`npm audit`: zero vulnerabilities).
-- Local visual QA confirms professional desktop/mobile OTP login rendering and unauthenticated redirect protection.
+- Local visual QA previously confirmed professional desktop/mobile login rendering and unauthenticated redirect protection; the login form has since changed from phone OTP to email/password.
 - Production checks confirm the login route, manifest and icon assets respond successfully and cron access rejects unsigned requests.
-- Authenticated workflow QA still needs a real SMS OTP login and assigned role.
+- Authenticated workflow QA still needs a real email registration/sign-in and assigned role.

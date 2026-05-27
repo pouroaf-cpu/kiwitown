@@ -10,7 +10,7 @@ export async function getViewer() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, user_id, name, phone, role, salary, bonus_pct, active, archived, created_at")
+    .select("id, user_id, name, email, phone, role, salary, bonus_pct, active, archived, created_at")
     .eq("user_id", user.id)
     .eq("archived", false)
     .maybeSingle();

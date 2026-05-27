@@ -6,7 +6,7 @@ See global instructions: C:/Users/PFrew/Projects/_agent-system/CLAUDE.md
 - Next.js 15 (App Router; upgraded for security fixes)
 - TypeScript
 - Tailwind CSS
-- Supabase (auth: phone OTP, db: postgres with RLS)
+- Supabase (auth: email/password, db: postgres with RLS)
 - next-pwa (@ducanh2912/next-pwa) — PWA / service worker
 - Deployed to Vercel
 

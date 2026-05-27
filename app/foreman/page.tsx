@@ -27,7 +27,7 @@ export default async function ForemanPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, name, phone, role")
+    .select("id, name, email, phone, role")
     .eq("user_id", user.id)
     .single();
 
@@ -40,10 +40,10 @@ export default async function ForemanPage() {
     supabase.from("weekly_submissions").select("*").eq("foreman_id", profile.id).eq("archived", false).order("submitted_at", { ascending: false }).limit(8),
     supabase.from("checklist_items").select("*").eq("active", true).eq("archived", false).order("order_index"),
     supabase.from("kpi_entries").select("*").eq("month", new Date().getMonth() + 1).eq("year", new Date().getFullYear()).eq("archived", false),
-    supabase.from("profiles").select("id,name,phone").eq("role", "sparky").eq("archived", false),
+    supabase.from("profiles").select("id,name,email,phone").eq("role", "sparky").eq("archived", false),
   ]);
 
-  const displayName = profile.name?.trim() || profile.phone || "Foreman";
+  const displayName = profile.name?.trim() || profile.email || profile.phone || "Foreman";
 
   return (
     <ForemanDashboard
@@ -54,7 +54,7 @@ export default async function ForemanPage() {
       history={(history ?? []) as WeeklySubmission[]}
       checklistItems={(checklistItems ?? []) as ChecklistItem[]}
       teamEntries={(teamEntries ?? []) as KpiEntry[]}
-      sparkies={(sparkies ?? []) as { id: string; name: string; phone: string }[]}
+      sparkies={(sparkies ?? []) as { id: string; name: string; email: string; phone: string }[]}
     />
   );
 }

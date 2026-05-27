@@ -7,7 +7,7 @@
 
 ## Changed This Session
 - Saved the build brief in `kiwitown.md`.
-- Replaced email/password login with NZ phone OTP flow and role routing for `super_admin`, `coo`, `foreman`, and `sparky`.
+- Replaced NZ phone OTP login with email/password sign in and registration, plus role routing for `super_admin`, `coo`, `foreman`, and `sparky`.
 - Added a dedicated COO operations console (`/coo`) and super-admin configuration screen (`/super-admin`).
 - Rebuilt foreman and sparky dashboards to enforce read/write boundaries and support configurable targets/checklists.
 - Added KPI entry, staff assignment/archive, checklist, target versioning, audit, month-end, report export, settings and push subscription APIs.
@@ -24,7 +24,7 @@
 - New seeded configuration: 10 active checklist items, 4 global KPI targets, 1 system settings row.
 - RLS enabled on all public application tables; archive/recycle and manager audit triggers added.
 - Security advisor remaining note: authenticated `get_team_score` aggregate RPC is intentionally privileged and only returns team average after active-profile validation.
-- Supabase Auth advisor recommends enabling leaked password protection; application login now uses OTP, but enable it if password login is retained for any users.
+- Supabase Auth advisor recommends enabling leaked password protection now that application login uses email/password.
 
 ## Vercel Status
 - Linked project: `kiwitown` under team `team_YV45ydmmAkdW13akUOvAsuIO`.
@@ -38,11 +38,11 @@
 - `npm run lint` passes.
 - `npm run build` passes with PWA custom worker generated.
 - `npm audit` reports zero vulnerabilities.
-- Playwright verification passed for desktop login, 390 px mobile login, and unauthenticated `/coo` redirect to `/login`.
+- Playwright verification previously passed for desktop/mobile login layout and unauthenticated `/coo` redirect to `/login`; re-run visual QA after the email login change if polishing further.
 - Live checks passed for `/login`, `/manifest.json`, PWA icon delivery, and cron authentication rejection.
 
 ## Next Steps
 - Verify scheduled push dispatch with a real subscription at the next controlled test window. If delivery fails, confirm `SUPABASE_SERVICE_ROLE_KEY` contains a server-only Supabase Secret key (`sb_secret_...`) or legacy `service_role` key, not the publishable browser key.
 - Use the migrated COO account to assign the first `super_admin`; after one exists, only super-admin can assign owner access.
-- Confirm SMS provider/phone OTP configuration in Supabase Auth and complete an end-to-end role login test.
+- Confirm Supabase Auth email provider settings, Site URL, and redirect URL include `https://kiwitown.vercel.app/auth/confirm`, then complete an end-to-end email registration/sign-in test.
 - Trigger and verify a controlled production push subscription/delivery.
