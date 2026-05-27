@@ -21,6 +21,10 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["DM Sans", "sans-serif"],
+        display: ["Barlow Condensed", "sans-serif"],
+      },
+      boxShadow: {
+        brand: "0 0 18px rgba(0, 174, 239, 0.65)",
       },
     },
   },

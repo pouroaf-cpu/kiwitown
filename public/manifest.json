@@ -1,11 +1,11 @@
 {
   "name": "Kiwitown Electrical",
-  "short_name": "Kiwitown",
-  "description": "Field management app for Kiwitown Electrical",
+  "short_name": "Kiwitown KPI",
+  "description": "KPI and weekly performance tracking for Kiwitown Electrical",
   "theme_color": "#00AEEF",
   "background_color": "#0B0D12",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "/",
   "start_url": "/",
   "icons": [

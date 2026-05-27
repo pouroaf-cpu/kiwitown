@@ -12,27 +12,21 @@ export default async function RootPage() {
 
   if (!user) redirect("/login");
 
-  // Fetch profile to determine role
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, active, archived")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (profileError) {
-    console.error("[root] ERR_CODE:", profileError.code);
-    console.error("[root] ERR_MSG:", profileError.message);
-    console.error("[root] ERR_HINT:", profileError.hint);
-  }
-
-  if (!profile?.role) {
-    console.error("[root] PENDING — uid:", user.id, "profile_null:", profile === null, "role:", profile?.role);
+  if (!profile?.role || !profile.active || profile.archived) {
     redirect("/pending");
   }
 
   switch (profile.role) {
-    case "admin":
-      redirect("/admin");
+    case "super_admin":
+      redirect("/super-admin");
+    case "coo":
+      redirect("/coo");
     case "foreman":
       redirect("/foreman");
     case "sparky":
