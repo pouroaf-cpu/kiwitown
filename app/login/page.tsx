@@ -1,92 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+function toNzMobile(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("64")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+64${digits.slice(1)}`;
+  return `+64${digits}`;
+}
+
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const supabase = useMemo(() => createClient(), []);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [sentTo, setSentTo] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const supabase = createClient();
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  async function requestCode(event: FormEvent) {
+    event.preventDefault();
+    const normalised = toNzMobile(phone);
     setLoading(true);
     setError("");
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      window.location.href = "/";
+    const { error: requestError } = await supabase.auth.signInWithOtp({ phone: normalised });
+    setLoading(false);
+    if (requestError) {
+      setError(requestError.message);
+      return;
     }
+    setSentTo(normalised);
+  }
+
+  async function verifyCode(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      phone: sentTo,
+      token: otp.trim(),
+      type: "sms",
+    });
+    setLoading(false);
+    if (verifyError) {
+      setError(verifyError.message);
+      return;
+    }
+    window.location.assign("/");
   }
 
   return (
-    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 safe-top safe-bottom">
-      {/* Logo / Brand */}
-      <div className="mb-10 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-brand flex items-center justify-center mx-auto mb-4">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" fill="white" opacity="0.9" />
-            <path d="M12 16L15 19L20 13" stroke="#0B0D12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold text-text-primary tracking-tight">Kiwitown Electrical</h1>
-        <p className="text-text-secondary text-sm mt-1">Field management</p>
-      </div>
-
-      {/* Card */}
-      <div className="w-full max-w-sm bg-surface border border-border rounded-2xl p-6">
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              autoFocus
-              autoComplete="email"
-              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text-primary text-base placeholder:text-muted focus:outline-none focus:border-brand transition-colors"
-            />
+    <main className="industrial-grid min-h-screen px-5 py-8 md:flex md:items-center md:justify-center">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col justify-between gap-10 md:min-h-0 md:flex-row md:items-center">
+        <section className="pt-10 md:max-w-xl md:pt-0">
+          <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-brand/30 bg-brand/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-brand">
+            <span className="h-2 w-2 rounded-full bg-brand shadow-brand" />
+            Kiwitown Electrical
           </div>
+          <h1 className="font-display text-5xl uppercase leading-[0.92] text-white md:text-7xl">
+            Crew performance.
+            <span className="block text-brand">Visible daily.</span>
+          </h1>
+          <p className="mt-6 max-w-md text-sm leading-7 text-text-secondary md:text-base">
+            KPI tracking, weekly checks and month-end bonus reconciliation built for the field.
+          </p>
+        </section>
 
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-              className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text-primary text-base placeholder:text-muted focus:outline-none focus:border-brand transition-colors"
-            />
-          </div>
-
-          {error && (
-            <p className="text-red-400 text-sm bg-red-400/10 rounded-lg px-3 py-2">{error}</p>
+        <section className="panel relative w-full overflow-hidden p-6 md:max-w-md md:p-8">
+          <div className="absolute right-0 top-0 h-24 w-24 border-b border-l border-brand/25 bg-brand/5" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand">Secure access</p>
+          <h2 className="mt-3 text-2xl font-semibold text-white">
+            {sentTo ? "Verify your code" : "Sign in by mobile"}
+          </h2>
+          <p className="mt-2 text-sm text-text-secondary">
+            {sentTo ? `Six-digit code sent to ${sentTo}.` : "Use your registered NZ mobile number."}
+          </p>
+          {!sentTo ? (
+            <form className="mt-8 space-y-5" onSubmit={requestCode}>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+                Mobile number
+                <input
+                  className="field mt-3"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="021 234 5678"
+                  required
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                />
+              </label>
+              <button className="primary-button" disabled={loading} type="submit">
+                {loading ? "Sending code..." : "Send access code"}
+              </button>
+            </form>
+          ) : (
+            <form className="mt-8 space-y-5" onSubmit={verifyCode}>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+                One-time code
+                <input
+                  className="field mt-3 text-center text-2xl tracking-[0.45em]"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  required
+                  value={otp}
+                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+                />
+              </label>
+              <button className="primary-button" disabled={loading || otp.length !== 6} type="submit">
+                {loading ? "Checking..." : "Verify and continue"}
+              </button>
+              <button className="secondary-button" onClick={() => setSentTo("")} type="button">
+                Use another number
+              </button>
+            </form>
           )}
-
-          <button
-            type="submit"
-            disabled={loading || !email || !password}
-            className="w-full bg-brand text-white font-semibold py-3 rounded-xl disabled:opacity-50 active:scale-95 transition-transform"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-
-        <p className="text-xs text-text-muted text-center mt-5">
-          Contact your admin to get access
-        </p>
+          {error && <p className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

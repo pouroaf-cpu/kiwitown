@@ -1,75 +1,46 @@
-# Kiwitown Electrical — Agent Handoff
+# Kiwitown KPI - Agent Handoff
 
 ## Last Agent
-- Agent: Claude Code
+- Agent: Codex
 - Date: 2026-05-27
-- Status: ✅ Desktop layout built across all three dashboards
+- Status: Application expansion implemented, Supabase migrated, deployment pending final secret/config verification
 
-## What Was Built This Session
-### Desktop layout (all dashboards)
-- `components/TopNav.tsx` (new) — desktop-only sticky top bar (`hidden md:flex`):
-  - Kiwitown logo mark
-  - Admin / Checklist / Sparky nav links with active-state highlight
-  - Username + Sign out on the right
-  - Used by admin and sparky dashboards
-- `components/BottomNav.tsx` — added `md:hidden` so it only shows on mobile
-- `app/admin/dashboard.tsx`:
-  - TopNav for desktop; mobile header wrapped in `md:hidden`
-  - Content area: `md:max-w-4xl md:mx-auto md:px-8`
-  - Role/KPI bottom sheets converted to centered modals on desktop (`flex items-end md:items-center justify-center`)
-  - Drag handles on modals hidden on desktop (`md:hidden`)
-  - Hover states added to buttons (desktop UX)
-  - Toast repositioned to top-right on desktop
-- `app/sparky/dashboard.tsx`:
-  - Same TopNav + mobile header pattern
-  - 5-column desktop grid: score card (`col-span-2`) + 2×2 KPI cards (`col-span-3`)
-  - History below, full-width
-- `app/foreman/dashboard.tsx`:
-  - Desktop nav replaced "Coming soon" foreman-specific items with real Admin/Checklist/Sparky `<a>` links
-  - Any role (including admin previewing) can navigate between views on desktop
-
-## Previous Session Work (2026-05-26)
-### Admin dashboard — real Supabase data
-- `app/admin/page.tsx` — server component; fetches admin profile, all profiles (via RPC), current month KPI entries
-- `app/admin/dashboard.tsx` — Team tab + KPIs tab, role assignment, KPI entry
-
-### Sparky dashboard — real Supabase data
-- `app/sparky/page.tsx` — server component; fetches sparky profile, current month KPI entry, 6-month history
-- `app/sparky/dashboard.tsx` — animated score bar, KPI cards, 6-month history
-
-### API routes
-- `app/api/users/route.ts` — GET all profiles (admin only), PATCH role assignment
-- `app/api/kpi/route.ts` — POST upsert KPI entry with auto-calculated score + bonus
-- `app/api/weekly-submission/route.ts` — POST + GET (upsert, idempotent; admin + foreman)
-
-### Auth
-- Login: email + password (`signInWithPassword`)
-- `components/BottomNav.tsx` — Admin / Checklist / Sparky tabs (mobile only now)
+## Changed This Session
+- Saved the build brief in `kiwitown.md`.
+- Replaced email/password login with NZ phone OTP flow and role routing for `super_admin`, `coo`, `foreman`, and `sparky`.
+- Added a dedicated COO operations console (`/coo`) and super-admin configuration screen (`/super-admin`).
+- Rebuilt foreman and sparky dashboards to enforce read/write boundaries and support configurable targets/checklists.
+- Added KPI entry, staff assignment/archive, checklist, target versioning, audit, month-end, report export, settings and push subscription APIs.
+- Added PWA install icons, branded industrial UI treatment, custom push notification worker and Vercel daily cron endpoint.
+- Upgraded Next.js to `15.5.18`, configured ESLint, and remediated npm advisories with zero findings from `npm audit`.
 
 ## Supabase Status
-- Project: mpggkixpvyrupmqnamgl.supabase.co (on separate Supabase account — MCP cannot access)
-- .env.local: ✅ configured with real credentials
-- SQL schema (001_initial.sql): ✅ run by user
-- `admin_get_profiles` RPC: needs confirming it exists in DB (code calls it)
+- Project URL: `https://mpggkixpvyrupmqnamgl.supabase.co`.
+- Applied migrations:
+  - `20260527083940_kpi_platform_expansion.sql`
+  - `20260527084918_add_foreign_key_indexes.sql`
+  - `20260527091950_month_end_audit_support.sql`
+- Existing rows preserved; former `admin` profile values were migrated to `coo`.
+- New seeded configuration: 10 active checklist items, 4 global KPI targets, 1 system settings row.
+- RLS enabled on all public application tables; archive/recycle and manager audit triggers added.
+- Security advisor remaining note: authenticated `get_team_score` aggregate RPC is intentionally privileged and only returns team average after active-profile validation.
+- Supabase Auth advisor recommends enabling leaked password protection; application login now uses OTP, but enable it if password login is retained for any users.
 
-## Score Formula (in /api/kpi and admin dashboard preview)
-- charge_out: min(value/85 × 100, 100) × 0.25
-- job_cards: min(value/20 × 100, 100) × 0.25
-- callbacks: max(0, (1 − value/5) × 100) × 0.25
-- timesheets_days: min(value/10 × 100, 100) × 0.25
-- Bonus = (score/100) × (annual_salary/12) × (bonus_pct/100)
+## Vercel Status
+- Linked project: `kiwitown` under team `team_YV45ydmmAkdW13akUOvAsuIO`.
+- Production public Supabase URL and supplied publishable key configured.
+- VAPID public/private key, VAPID subject and `CRON_SECRET` configured in Production.
+- Blocker: add `SUPABASE_SERVICE_ROLE_KEY` as a server-only Production environment variable before scheduled push messages can be sent. The connected CLI account cannot retrieve it.
 
-## What's Still Needed
-- [ ] **First admin user** — create user in Supabase Auth (email+password), then manually set `role='admin'` in profiles table
-- [ ] **`admin_get_profiles` RPC** — confirm it exists in Supabase (the code calls `supabase.rpc("admin_get_profiles")`)
-- [ ] **Vercel env vars** — confirm NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY are set in Vercel dashboard
-- [ ] **PWA icons** — public/icons/icon-192x192.png + icon-512x512.png
-- [ ] **Team avg on sparky dashboard** — needs SECURITY DEFINER Postgres function to read avg across all sparkies
-- [ ] **Push notifications** — weekly reminders for foreman checklist
-- [ ] **Clean up debug logs** — `app/page.tsx` has verbose console.error logging added for debugging
+## Verification
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run build` passes with PWA custom worker generated.
+- `npm audit` reports zero vulnerabilities.
+- Playwright verification passed for desktop login, 390 px mobile login, and unauthenticated `/coo` redirect to `/login`.
 
-## Next Actions
-- [ ] Test desktop: open kiwitown.vercel.app on a laptop, log in, navigate all three dashboards
-- [ ] Set up first admin user end-to-end
-- [ ] Deploy to Vercel and verify env vars
-- [ ] PWA icons
+## Next Steps
+- Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel Production from the Supabase project owner dashboard.
+- Use the migrated COO account to assign the first `super_admin`; after one exists, only super-admin can assign owner access.
+- Confirm SMS provider/phone OTP configuration in Supabase Auth and complete an end-to-end role login test.
+- Trigger and verify a production push subscription/delivery after the service-role key is configured.

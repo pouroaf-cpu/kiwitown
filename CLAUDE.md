@@ -3,7 +3,7 @@
 See global instructions: C:/Users/PFrew/Projects/_agent-system/CLAUDE.md
 
 ## Stack
-- Next.js 14 (App Router)
+- Next.js 15 (App Router; upgraded for security fixes)
 - TypeScript
 - Tailwind CSS
 - Supabase (auth: phone OTP, db: postgres with RLS)
@@ -14,9 +14,9 @@ See global instructions: C:/Users/PFrew/Projects/_agent-system/CLAUDE.md
 - Mobile-first — majority of users on iPhone/Android
 - Brand colour: #00AEEF, background: #0B0D12
 - Font: DM Sans (Google Fonts)
-- All auth via Supabase server-side (lib/supabase/server.ts)
+- All protected data access via Supabase server-side handlers (`lib/supabase/server.ts`)
 - Never use client-side auth checks for access control — middleware.ts handles routing
-- Three roles: admin / foreman / sparky — each has its own route (/admin /foreman /sparky)
+- Four roles: super_admin / coo / foreman / sparky — routes (`/super-admin`, `/coo`, `/foreman`, `/sparky`)
 - Follow folder structure already established in this repo
 - Check HANDOFF.md before every session
 - Update HANDOFF.md and FILE_MAP.md at end of every session
@@ -25,11 +25,14 @@ See global instructions: C:/Users/PFrew/Projects/_agent-system/CLAUDE.md
 - Stored in .env.local (never committed)
 - See .env.local.example for required vars
 - NEXT_PUBLIC_SUPABASE_URL — Supabase project URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY — Supabase anon key
+- NEXT_PUBLIC_SUPABASE_ANON_KEY — Supabase publishable/anon browser key
+- SUPABASE_SERVICE_ROLE_KEY — server-only key for scheduled push dispatch (never expose client-side)
+- NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT — Web Push configuration
+- CRON_SECRET — protects the Vercel notification cron endpoint
 
 ## Supabase
-- Run supabase/migrations/001_initial.sql in Supabase SQL Editor to create tables
-- Tables: profiles, weekly_submissions, kpi_entries
+- Migrations are applied through Supabase migration history
+- Tables include profiles, weekly_submissions, kpi_entries, targets, checklist config, audit/recycle, settings, month end, and push jobs
 - RLS enabled on all tables
 
 ## Vercel

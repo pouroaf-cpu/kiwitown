@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { KpiEntry } from "@/lib/types";
+import type { KpiEntry, KpiType } from "@/lib/types";
 import BottomNav from "@/components/BottomNav";
 import TopNav from "@/components/TopNav";
+import NotificationPrompt from "@/components/NotificationPrompt";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -59,14 +60,14 @@ const KPI_META: KpiMeta[] = [
   },
 ];
 
-function kpiStatus(meta: KpiMeta, value: number): "good" | "ok" | "bad" {
+function kpiStatus(meta: KpiMeta, value: number, target: number): "good" | "ok" | "bad" {
   if (meta.lowerBetter) {
     if (value === 0) return "good";
-    if (value <= 1) return "good";
-    if (value === 2) return "ok";
+    if (value <= target) return "good";
+    if (value <= target + 1) return "ok";
     return "bad";
   }
-  const ratio = value / meta.target;
+  const ratio = value / target;
   if (ratio >= 1) return "good";
   if (ratio >= 0.85) return "ok";
   return "bad";
@@ -89,6 +90,8 @@ interface Props {
   history: Pick<KpiEntry, "month" | "year" | "score" | "bonus_earned">[];
   currentMonth: number;
   currentYear: number;
+  targets: Record<KpiType, number>;
+  teamScore: number;
 }
 
 export default function SparkyDashboard({
@@ -97,6 +100,8 @@ export default function SparkyDashboard({
   history,
   currentMonth,
   currentYear,
+  targets,
+  teamScore,
 }: Props) {
   const supabase = createClient();
   const [barWidth, setBarWidth] = useState(0);
@@ -121,7 +126,7 @@ export default function SparkyDashboard({
   return (
     <div className="min-h-screen bg-bg pb-32 md:pb-12">
       {/* ── Desktop top nav ── */}
-      <TopNav userName={sparkyName} onSignOut={signOut} />
+      <TopNav role="sparky" userName={sparkyName} onSignOut={signOut} />
 
       {/* ── Mobile header (hidden on desktop) ── */}
       <div className="md:hidden sticky top-0 z-30 bg-bg/80 backdrop-blur-xl border-b border-border px-4 py-4">
@@ -194,6 +199,11 @@ export default function SparkyDashboard({
                   Your admin enters KPI figures each month — check back soon.
                 </p>
               )}
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+                <span className="text-xs uppercase tracking-widest text-text-secondary">Team score</span>
+                <span className="text-lg font-semibold text-white">{teamScore.toFixed(1)}<span className="text-sm text-text-secondary">/100</span></span>
+              </div>
+              <NotificationPrompt />
             </div>
           </div>
 
@@ -206,7 +216,8 @@ export default function SparkyDashboard({
             <div className="grid grid-cols-2 gap-3">
               {KPI_META.map((meta) => {
                 const value = kpiEntry ? kpiEntry[meta.key] : null;
-                const status = value !== null ? kpiStatus(meta, value as number) : null;
+                const target = targets[meta.key];
+                const status = value !== null ? kpiStatus(meta, value as number, target) : null;
 
                 return (
                   <div
@@ -219,7 +230,7 @@ export default function SparkyDashboard({
                         {status && (
                           <span className={`w-2 h-2 rounded-full ${STATUS_DOT[status]}`} />
                         )}
-                        <span className="text-xs text-muted">{meta.targetLabel}</span>
+                        <span className="text-xs text-muted">{meta.lowerBetter ? `< ${target}` : target}</span>
                       </div>
                     </div>
                     <div className={`text-2xl font-bold ${meta.color}`}>
@@ -280,7 +291,7 @@ export default function SparkyDashboard({
         )}
       </div>
 
-      <BottomNav />
+      <BottomNav role="sparky" />
     </div>
   );
 }

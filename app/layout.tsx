@@ -24,13 +24,13 @@ const satisfy = Satisfy({
 });
 
 export const metadata: Metadata = {
-  title: "Kiwitown Electrical",
-  description: "Field management app for Kiwitown Electrical",
+  title: "Kiwitown KPI | Kiwitown Electrical",
+  description: "Crew KPI and weekly performance tracking for Kiwitown Electrical",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Kiwitown",
+    title: "Kiwitown KPI",
   },
   formatDetection: { telephone: false },
 };

@@ -21,6 +21,87 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.industrial-grid {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 80% 10%, rgba(0, 174, 239, 0.17), transparent 36%),
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: auto, 46px 46px, 46px 46px;
+}
+
+.panel {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(19, 22, 30, 0.98), rgba(11, 13, 18, 0.98));
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+}
+
+.brand-mark {
+  display: inline-flex;
+  height: 38px;
+  width: 38px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--brand);
+  color: #061017;
+  font-family: var(--font-barlow), "Barlow Condensed", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  background: rgba(5, 8, 12, 0.5);
+  padding: 14px 15px;
+  color: #f9fafb;
+  font-size: 16px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field:focus {
+  outline: none;
+  border-color: rgba(0, 174, 239, 0.55);
+  box-shadow: 0 0 0 3px rgba(0, 174, 239, 0.12);
+}
+
+.primary-button,
+.secondary-button {
+  width: 100%;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.primary-button {
+  background: var(--brand);
+  color: #061017;
+}
+
+.secondary-button {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #cbd5e1;
+}
+
+.primary-button:hover,
+.secondary-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
 /* Mobile tap highlight */
 * {
   -webkit-tap-highlight-color: transparent;
