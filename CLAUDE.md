@@ -25,8 +25,8 @@ See global instructions: C:/Users/PFrew/Projects/_agent-system/CLAUDE.md
 - Stored in .env.local (never committed)
 - See .env.local.example for required vars
 - NEXT_PUBLIC_SUPABASE_URL — Supabase project URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY — Supabase publishable/anon browser key
-- SUPABASE_SERVICE_ROLE_KEY — server-only key for scheduled push dispatch (never expose client-side)
+- NEXT_PUBLIC_SUPABASE_ANON_KEY — Supabase publishable browser key (`sb_publishable_...`; variable name retained for compatibility)
+- SUPABASE_SERVICE_ROLE_KEY — server-only Supabase Secret key (`sb_secret_...`) or legacy `service_role` key for scheduled push dispatch (never expose client-side)
 - NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY / VAPID_SUBJECT — Web Push configuration
 - CRON_SECRET — protects the Vercel notification cron endpoint
 
