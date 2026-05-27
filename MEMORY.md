@@ -18,7 +18,7 @@
 - Vercel project is linked under `team_YV45ydmmAkdW13akUOvAsuIO`.
 - Production alias is live at `https://kiwitown.vercel.app`.
 - Vercel Production contains public Supabase configuration plus VAPID and cron variables.
-- Vercel now lists `SUPABASE_SERVICE_ROLE_KEY` in Production and Preview. The retained application variable name accepts the current server-only Supabase Secret key format (`sb_secret_...`) or a legacy `service_role` key; a fresh deployment is required after updating the environment variable.
+- Vercel now lists `SUPABASE_SERVICE_ROLE_KEY` in Production and Preview. The retained application variable name accepts the current server-only Supabase Secret key format (`sb_secret_...`) or a legacy `service_role` key; Production was redeployed with this variable on 2026-05-27.
 
 ## Verification State
 - Type checking, lint, production build and npm audit pass (`npm audit`: zero vulnerabilities).

@@ -31,7 +31,7 @@
 - Live production URL: `https://kiwitown.vercel.app`.
 - Production public Supabase URL and supplied publishable key configured.
 - VAPID public/private key, VAPID subject and `CRON_SECRET` configured in Production.
-- `SUPABASE_SERVICE_ROLE_KEY` now appears in Vercel for Production and Preview. Despite the retained compatibility name, it may contain Supabase's current server-only `sb_secret_...` key; legacy `service_role` is not required. Redeploy is required after the environment update before scheduled push dispatch can use it.
+- `SUPABASE_SERVICE_ROLE_KEY` now appears in Vercel for Production and Preview. Despite the retained compatibility name, it may contain Supabase's current server-only `sb_secret_...` key; legacy `service_role` is not required. Production was redeployed after this environment update on 2026-05-27.
 
 ## Verification
 - `npx tsc --noEmit` passes.
@@ -42,7 +42,7 @@
 - Live checks passed for `/login`, `/manifest.json`, PWA icon delivery, and cron authentication rejection.
 
 ## Next Steps
-- Verify scheduled push dispatch after the post-environment-variable production deployment. If authorization fails, confirm `SUPABASE_SERVICE_ROLE_KEY` contains a server-only Supabase Secret key (`sb_secret_...`) or legacy `service_role` key, not the publishable browser key.
+- Verify scheduled push dispatch with a real subscription at the next controlled test window. If delivery fails, confirm `SUPABASE_SERVICE_ROLE_KEY` contains a server-only Supabase Secret key (`sb_secret_...`) or legacy `service_role` key, not the publishable browser key.
 - Use the migrated COO account to assign the first `super_admin`; after one exists, only super-admin can assign owner access.
 - Confirm SMS provider/phone OTP configuration in Supabase Auth and complete an end-to-end role login test.
-- Trigger and verify a production push subscription/delivery after the service-role key is configured.
+- Trigger and verify a controlled production push subscription/delivery.
