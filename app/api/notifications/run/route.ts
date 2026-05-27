@@ -12,6 +12,9 @@ async function runNotifications(request: Request) {
   const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
   const subject = process.env.VAPID_SUBJECT;
   if (!vapidPublic || !vapidPrivate || !subject) return NextResponse.json({ error: "VAPID environment is incomplete" }, { status: 500 });
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ delivered: 0, disabled: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+  }
   webpush.setVapidDetails(subject, vapidPublic, vapidPrivate);
   const admin = createAdminClient();
   const now = new Date();

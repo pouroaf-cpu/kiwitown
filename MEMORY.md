@@ -16,10 +16,12 @@
 - Supabase project: `mpggkixpvyrupmqnamgl`.
 - Supabase migrations through `20260527091950_month_end_audit_support` are applied.
 - Vercel project is linked under `team_YV45ydmmAkdW13akUOvAsuIO`.
+- Production alias is live at `https://kiwitown.vercel.app`.
 - Vercel Production contains public Supabase configuration plus VAPID and cron variables.
-- Scheduled push dispatch still requires `SUPABASE_SERVICE_ROLE_KEY` to be added to Vercel Production by a Supabase owner.
+- Scheduled push dispatch is disabled with zero sends until `SUPABASE_SERVICE_ROLE_KEY` is added to Vercel Production by a Supabase owner.
 
 ## Verification State
 - Type checking, lint, production build and npm audit pass (`npm audit`: zero vulnerabilities).
 - Local visual QA confirms professional desktop/mobile OTP login rendering and unauthenticated redirect protection.
+- Production checks confirm the login route, manifest and icon assets respond successfully and cron access rejects unsigned requests.
 - Authenticated workflow QA still needs a real SMS OTP login and assigned role.

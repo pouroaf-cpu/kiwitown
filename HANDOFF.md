@@ -3,7 +3,7 @@
 ## Last Agent
 - Agent: Codex
 - Date: 2026-05-27
-- Status: Application expansion implemented, Supabase migrated, deployment pending final secret/config verification
+- Status: Application expansion deployed; scheduled push dispatch awaits one server-only Supabase secret
 
 ## Changed This Session
 - Saved the build brief in `kiwitown.md`.
@@ -28,9 +28,10 @@
 
 ## Vercel Status
 - Linked project: `kiwitown` under team `team_YV45ydmmAkdW13akUOvAsuIO`.
+- Live production URL: `https://kiwitown.vercel.app`.
 - Production public Supabase URL and supplied publishable key configured.
 - VAPID public/private key, VAPID subject and `CRON_SECRET` configured in Production.
-- Blocker: add `SUPABASE_SERVICE_ROLE_KEY` as a server-only Production environment variable before scheduled push messages can be sent. The connected CLI account cannot retrieve it.
+- Blocker: add `SUPABASE_SERVICE_ROLE_KEY` as a server-only Production environment variable before scheduled push messages can be sent. Until then the cron endpoint exits successfully with zero deliveries. The connected CLI account cannot retrieve that key.
 
 ## Verification
 - `npx tsc --noEmit` passes.
@@ -38,6 +39,7 @@
 - `npm run build` passes with PWA custom worker generated.
 - `npm audit` reports zero vulnerabilities.
 - Playwright verification passed for desktop login, 390 px mobile login, and unauthenticated `/coo` redirect to `/login`.
+- Live checks passed for `/login`, `/manifest.json`, PWA icon delivery, and cron authentication rejection.
 
 ## Next Steps
 - Add `SUPABASE_SERVICE_ROLE_KEY` to Vercel Production from the Supabase project owner dashboard.
