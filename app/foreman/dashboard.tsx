@@ -16,7 +16,7 @@ const prompts = [
 
 export default function ForemanDashboard({ foremanName, weekNum, year, existingSubmission, history, checklistItems, teamEntries, sparkies }: {
   foremanName: string; weekNum: number; year: number; existingSubmission: WeeklySubmission | null; history: WeeklySubmission[];
-  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; phone: string }[];
+  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; email: string; phone: string }[];
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [checks, setChecks] = useState<Record<string, boolean>>(existingSubmission?.checklist ?? {});
@@ -90,7 +90,7 @@ export default function ForemanDashboard({ foremanName, weekNum, year, existingS
             <button className="panel flex w-full items-center justify-between p-5 text-left" onClick={() => setTeamOpen((open) => !open)}>
               <div><p className="text-xs uppercase tracking-widest text-brand">Read only</p><p className="mt-2 font-semibold">Sparky KPIs</p></div><span className="text-brand">{teamOpen ? "Hide" : "View"}</span>
             </button>
-            {teamOpen && <div className="panel overflow-hidden">{sparkies.map((sparky) => { const entry = teamEntries.find((row) => row.sparky_id === sparky.id); return <div key={sparky.id} className="border-b border-border p-4 last:border-0"><div className="flex justify-between"><span>{sparky.name || sparky.phone}</span><span className="text-brand">{entry ? `${entry.score}/100` : "Pending"}</span></div>{entry && <p className="mt-2 text-xs text-text-secondary">Charge out {entry.charge_out}% | Jobs {entry.job_cards} | Callbacks {entry.callbacks}</p>}</div>; })}</div>}
+            {teamOpen && <div className="panel overflow-hidden">{sparkies.map((sparky) => { const entry = teamEntries.find((row) => row.sparky_id === sparky.id); return <div key={sparky.id} className="border-b border-border p-4 last:border-0"><div className="flex justify-between"><span>{sparky.name || sparky.email || sparky.phone}</span><span className="text-brand">{entry ? `${entry.score}/100` : "Pending"}</span></div>{entry && <p className="mt-2 text-xs text-text-secondary">Charge out {entry.charge_out}% | Jobs {entry.job_cards} | Callbacks {entry.callbacks}</p>}</div>; })}</div>}
             <div className="panel p-5">
               <p className="text-xs uppercase tracking-widest text-text-secondary">Historical weeks</p>
               <div className="mt-4 space-y-3">{history.length ? history.map((submission) => <div className="flex items-center justify-between border-b border-border pb-3 text-sm last:border-0" key={submission.id}><span>Week {submission.week_number}, {submission.year}</span><span className="text-green-300">Submitted</span></div>) : <p className="text-sm text-text-secondary">No previous submissions.</p>}</div>

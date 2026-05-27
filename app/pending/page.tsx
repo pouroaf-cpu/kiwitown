@@ -9,7 +9,7 @@ export default function PendingPage() {
       </div>
       <h1 className="text-2xl font-bold mb-2">Account pending</h1>
       <p className="text-text-secondary max-w-xs">
-        Your mobile has been verified. A system owner will assign your access role shortly.
+        Your email account is active. A system owner will assign your access role shortly.
       </p>
     </div>
   );

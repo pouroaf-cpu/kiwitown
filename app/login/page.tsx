@@ -3,49 +3,46 @@
 import { FormEvent, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-function toNzMobile(raw: string) {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("64")) return `+${digits}`;
-  if (digits.startsWith("0")) return `+64${digits.slice(1)}`;
-  return `+64${digits}`;
-}
-
 export default function LoginPage() {
   const supabase = useMemo(() => createClient(), []);
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [sentTo, setSentTo] = useState("");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  async function requestCode(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const normalised = toNzMobile(phone);
+    const cleanEmail = email.trim().toLowerCase();
     setLoading(true);
     setError("");
-    const { error: requestError } = await supabase.auth.signInWithOtp({ phone: normalised });
-    setLoading(false);
-    if (requestError) {
-      setError(requestError.message);
-      return;
-    }
-    setSentTo(normalised);
-  }
+    setMessage("");
 
-  async function verifyCode(event: FormEvent) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      phone: sentTo,
-      token: otp.trim(),
-      type: "sms",
-    });
+    const { data, error: authError } =
+      mode === "signin"
+        ? await supabase.auth.signInWithPassword({ email: cleanEmail, password })
+        : await supabase.auth.signUp({
+            email: cleanEmail,
+            password,
+            options: {
+              data: { name: name.trim() },
+              emailRedirectTo: `${window.location.origin}/auth/confirm?next=/`,
+            },
+          });
+
     setLoading(false);
-    if (verifyError) {
-      setError(verifyError.message);
+    if (authError) {
+      setError(authError.message);
       return;
     }
+
+    if (mode === "signup" && !data.session) {
+      setMessage("Account created. Check your email to confirm access, then sign in.");
+      return;
+    }
+
     window.location.assign("/");
   }
 
@@ -70,52 +67,82 @@ export default function LoginPage() {
           <div className="absolute right-0 top-0 h-24 w-24 border-b border-l border-brand/25 bg-brand/5" />
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand">Secure access</p>
           <h2 className="mt-3 text-2xl font-semibold text-white">
-            {sentTo ? "Verify your code" : "Sign in by mobile"}
+            {mode === "signin" ? "Sign in by email" : "Create your account"}
           </h2>
           <p className="mt-2 text-sm text-text-secondary">
-            {sentTo ? `Six-digit code sent to ${sentTo}.` : "Use your registered NZ mobile number."}
+            {mode === "signin"
+              ? "Use your registered email address and password."
+              : "Register with email. Daniel or a super admin assigns your role after first login."}
           </p>
-          {!sentTo ? (
-            <form className="mt-8 space-y-5" onSubmit={requestCode}>
+          <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-black/20 p-1">
+            <button
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${mode === "signin" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
+              onClick={() => {
+                setMode("signin");
+                setError("");
+                setMessage("");
+              }}
+              type="button"
+            >
+              Sign in
+            </button>
+            <button
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${mode === "signup" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
+              onClick={() => {
+                setMode("signup");
+                setError("");
+                setMessage("");
+              }}
+              type="button"
+            >
+              Register
+            </button>
+          </div>
+          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+            {mode === "signup" && (
               <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
-                Mobile number
+                Full name
                 <input
                   className="field mt-3"
-                  autoComplete="tel"
-                  inputMode="tel"
-                  placeholder="021 234 5678"
+                  autoComplete="name"
+                  placeholder="Daniel Frew"
                   required
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
                 />
               </label>
-              <button className="primary-button" disabled={loading} type="submit">
-                {loading ? "Sending code..." : "Send access code"}
-              </button>
-            </form>
-          ) : (
-            <form className="mt-8 space-y-5" onSubmit={verifyCode}>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
-                One-time code
-                <input
-                  className="field mt-3 text-center text-2xl tracking-[0.45em]"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  required
-                  value={otp}
-                  onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
-                />
-              </label>
-              <button className="primary-button" disabled={loading || otp.length !== 6} type="submit">
-                {loading ? "Checking..." : "Verify and continue"}
-              </button>
-              <button className="secondary-button" onClick={() => setSentTo("")} type="button">
-                Use another number
-              </button>
-            </form>
-          )}
+            )}
+            <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+              Email address
+              <input
+                className="field mt-3"
+                autoComplete="email"
+                inputMode="email"
+                placeholder="name@kiwitown.co.nz"
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </label>
+            <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+              Password
+              <input
+                className="field mt-3"
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                minLength={8}
+                placeholder="Minimum 8 characters"
+                required
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+            <button className="primary-button" disabled={loading} type="submit">
+              {loading ? "Working..." : mode === "signin" ? "Sign in" : "Create account"}
+            </button>
+          </form>
+          {message && <p className="mt-5 rounded-xl border border-brand/25 bg-brand/10 p-3 text-sm text-brand">{message}</p>}
           {error && <p className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
         </section>
       </div>

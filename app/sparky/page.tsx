@@ -16,7 +16,7 @@ export default async function SparkyPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, name, phone, role")
+    .select("id, name, email, phone, role")
     .eq("user_id", user.id)
     .single();
 
@@ -48,7 +48,7 @@ export default async function SparkyPage() {
 
   return (
     <SparkyDashboard
-      sparkyName={profile.name?.trim() || profile.phone || "Sparky"}
+      sparkyName={profile.name?.trim() || profile.email || profile.phone || "Sparky"}
       kpiEntry={(kpiEntry ?? null) as KpiEntry | null}
       history={(history ?? []) as Pick<KpiEntry, "month" | "year" | "score" | "bonus_earned">[]}
       currentMonth={month}
