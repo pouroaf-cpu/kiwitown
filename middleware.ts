@@ -7,6 +7,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
 
+  // API routes authenticate themselves and return JSON errors, so they must
+  // never be redirected to the HTML login page. The matcher's `api` exclusion
+  // is not reliable here, so guard explicitly. Each route's own getViewer()
+  // call still refreshes the session cookie when needed.
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next({ request });
+  }
+
   // Fast path: with no Supabase auth cookie the user can't be signed in, so
   // skip the network round-trip to the Auth server entirely. This keeps
   // logged-out traffic (login page, first visit) from paying for an auth call.
@@ -44,9 +52,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Do not run code between createServerClient and getClaims() — getClaims()
+  // both refreshes the session cookie and validates the JWT locally against
+  // the project's published ES256 key (no Auth-server round trip).
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   // Not logged in → redirect to login
   if (!user && !isPublic) {
