@@ -1,7 +1,10 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile, UserRole } from "@/lib/types";
 
-export async function getViewer() {
+// Cached per-request: when a page or route handler reads the viewer more than
+// once, it reuses the single auth + profile round-trip instead of repeating it.
+export const getViewer = cache(async function getViewer() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -16,7 +19,7 @@ export async function getViewer() {
     .maybeSingle();
 
   return { supabase, user, profile: (profile as Profile | null) ?? null };
-}
+});
 
 export function hasRole(profile: Profile | null, allowed: UserRole[]) {
   return !!profile?.role && profile.active && !profile.archived && allowed.includes(profile.role);
