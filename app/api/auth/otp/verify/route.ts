@@ -41,12 +41,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No active account for that number." }, { status: 403 });
   }
 
+  // Mint the session via an internal email derived from the phone, so we never
+  // depend on Supabase's Phone provider being enabled (email auth is always on).
+  // The user still signs in with phone + Twilio Verify; this email is internal.
   const password = throwawayPassword();
-  const { error: updateError } = await admin.auth.admin.updateUserById(prof.user_id, { password });
+  const email = `${phone.replace(/\D/g, "")}@phone.kiwitown.app`;
+  const { error: updateError } = await admin.auth.admin.updateUserById(prof.user_id, {
+    email,
+    email_confirm: true,
+    password,
+  });
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
 
   const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({ phone, password });
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
   if (signInError) return NextResponse.json({ error: signInError.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
