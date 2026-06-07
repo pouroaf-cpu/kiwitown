@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
-import type { ChecklistItem, KpiEntry, WeeklySubmission } from "@/lib/types";
+import type { ChecklistItem, KpiEntry, UserRole, WeeklySubmission } from "@/lib/types";
 
 const prompts = [
   ["went_well", "What went well this week?"],
@@ -14,9 +14,9 @@ const prompts = [
   ["support", "What support or training is required?"],
 ];
 
-export default function ForemanDashboard({ foremanName, weekNum, year, existingSubmission, history, checklistItems, teamEntries, sparkies, dailyPreview, showDailyCheck = true }: {
+export default function ForemanDashboard({ foremanName, weekNum, year, existingSubmission, history, checklistItems, teamEntries, sparkies, dailyPreview, showDailyCheck = true, navRole }: {
   foremanName: string; weekNum: number; year: number; existingSubmission: WeeklySubmission | null; history: WeeklySubmission[];
-  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; email: string; phone: string }[]; dailyPreview?: DailyData; showDailyCheck?: boolean;
+  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; email: string; phone: string }[]; dailyPreview?: DailyData; showDailyCheck?: boolean; navRole?: UserRole;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [checks, setChecks] = useState<Record<string, boolean>>(existingSubmission?.checklist ?? {});
@@ -46,7 +46,7 @@ export default function ForemanDashboard({ foremanName, weekNum, year, existingS
   }
 
   return (
-    <AppShell role="foreman" userName={foremanName} onSignOut={signOut}>
+    <AppShell role={navRole ?? "foreman"} userName={foremanName} onSignOut={signOut}>
       <main className="mx-auto max-w-6xl px-5 py-7 md:px-8 md:py-10">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>

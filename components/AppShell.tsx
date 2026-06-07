@@ -137,16 +137,18 @@ export default function AppShell({
       {open && (
         <div className="fixed inset-0 z-[60] md:hidden">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 border-r border-white/10 bg-white/[0.06] backdrop-blur-2xl">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg leading-none text-white"
-            >
-              ✕
-            </button>
-            {NavBody}
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col border-r border-white/10 bg-white/[0.06] backdrop-blur-2xl">
+            <div className="px-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg leading-none text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">{NavBody}</div>
           </aside>
         </div>
       )}

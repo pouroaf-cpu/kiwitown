@@ -18,8 +18,8 @@ function money(value: number) {
   return value.toLocaleString("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 }
 
-export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year, dailyPreview, showDailyCheck = true }: {
-  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number; dailyPreview?: DailyData; showDailyCheck?: boolean;
+export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year, dailyPreview, showDailyCheck = true, navRole }: {
+  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number; dailyPreview?: DailyData; showDailyCheck?: boolean; navRole?: UserRole;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>("overview");
@@ -105,7 +105,7 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
   }
 
   return (
-    <AppShell role={viewer.role!} userName={viewer.name || viewer.email || viewer.phone || "COO"} onSignOut={signOut}>
+    <AppShell role={navRole ?? viewer.role!} userName={viewer.name || viewer.email || viewer.phone || "COO"} onSignOut={signOut}>
       <header className="border-b border-border px-5 pb-6 pt-7 md:px-8 md:pt-10">
         <div className="mx-auto max-w-7xl">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">Operations control</p>

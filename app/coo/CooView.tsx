@@ -1,15 +1,17 @@
 import type { ServerClient } from "@/lib/supabase/server";
-import type { AuditEvent, ChecklistItem, KpiEntry, KpiTarget, Profile } from "@/lib/types";
+import type { AuditEvent, ChecklistItem, KpiEntry, KpiTarget, Profile, UserRole } from "@/lib/types";
 import CooDashboard from "./dashboard";
 
 export default async function CooView({
   supabase,
   profile,
   showDailyCheck,
+  navRole,
 }: {
   supabase: ServerClient;
   profile: Profile;
   showDailyCheck?: boolean;
+  navRole?: UserRole;
 }) {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -32,6 +34,7 @@ export default async function CooView({
       month={month}
       year={year}
       showDailyCheck={showDailyCheck}
+      navRole={navRole}
     />
   );
 }

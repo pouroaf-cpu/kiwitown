@@ -1,5 +1,5 @@
 import type { ServerClient } from "@/lib/supabase/server";
-import type { ChecklistItem, KpiEntry, Profile, WeeklySubmission } from "@/lib/types";
+import type { ChecklistItem, KpiEntry, Profile, UserRole, WeeklySubmission } from "@/lib/types";
 import ForemanDashboard from "./dashboard";
 
 function getWeekInfo(): { weekNum: number; year: number } {
@@ -18,10 +18,12 @@ export default async function ForemanView({
   supabase,
   profile,
   showDailyCheck,
+  navRole,
 }: {
   supabase: ServerClient;
   profile: Profile;
   showDailyCheck?: boolean;
+  navRole?: UserRole;
 }) {
   const { weekNum, year } = getWeekInfo();
 
@@ -46,6 +48,7 @@ export default async function ForemanView({
       teamEntries={(teamEntries ?? []) as KpiEntry[]}
       sparkies={(sparkies ?? []) as { id: string; name: string; email: string; phone: string }[]}
       showDailyCheck={showDailyCheck}
+      navRole={navRole}
     />
   );
 }

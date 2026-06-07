@@ -42,8 +42,7 @@ export default async function SparkyRoster({
   const submitted = crew.filter((s) => statusIds.has(s.id)).length;
 
   return (
-    <div className="industrial-grid min-h-screen">
-      <main className="mx-auto max-w-4xl px-5 pb-28 pt-8 md:px-8">
+    <main className="mx-auto max-w-4xl px-5 pb-28 md:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Sparkies</p>
         <h1 className="mt-3 font-display text-4xl uppercase text-white md:text-5xl">
           {mode === "dashboard" ? "Crew KPIs" : "Daily checks"}
@@ -79,7 +78,6 @@ export default async function SparkyRoster({
             );
           })}
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

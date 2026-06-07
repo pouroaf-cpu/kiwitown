@@ -3,16 +3,15 @@ export const preferredRegion = "syd1";
 import { redirect } from "next/navigation";
 import { getViewer, hasRole } from "@/lib/authorization";
 import { createAdminClient } from "@/lib/supabase/admin";
-import ReadOnlyFrame from "@/components/ReadOnlyFrame";
+import ViewerShell from "@/components/ViewerShell";
 import SparkyRoster from "@/components/SparkyRoster";
 import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
-import { businessDate } from "@/lib/dailyChecks";
+import { ROLE_LABELS, businessDate } from "@/lib/dailyChecks";
 import type { DailyCheck, DailyCheckWithProfile, Profile, UserRole } from "@/lib/types";
 
 const ROLE_OF: Record<string, UserRole> = { coo: "coo", foreman: "foreman", "office-admin": "office_admin", sparky: "sparky" };
-const LABEL: Record<string, string> = { coo: "COO", foreman: "Operating manager", "office-admin": "Office admin", sparky: "Sparky" };
 
-// Read-only cross-role Checklist, for super_admin + COO.
+// Cross-role Checklist for super_admin + COO — viewer's own sidebar (navRole).
 export default async function RoleChecklistPage({ params }: { params: Promise<{ role: string }> }) {
   const { supabase, user, profile } = await getViewer();
   if (!user) redirect("/login");
@@ -21,12 +20,14 @@ export default async function RoleChecklistPage({ params }: { params: Promise<{ 
   const { role } = await params;
   const r = ROLE_OF[role];
   if (!r) redirect("/");
+  const navRole = profile!.role!;
+  const userName = profile!.name || profile!.email || "Admin";
 
   if (r === "sparky") {
     return (
-      <ReadOnlyFrame label="Sparky · Checklist">
+      <ViewerShell navRole={navRole} userName={userName}>
         <SparkyRoster supabase={supabase} mode="checklist" />
-      </ReadOnlyFrame>
+      </ViewerShell>
     );
   }
 
@@ -49,7 +50,6 @@ export default async function RoleChecklistPage({ params }: { params: Promise<{ 
     .eq("profile_id", target.id)
     .eq("check_date", businessDate())
     .maybeSingle();
-
   const checks: DailyCheckWithProfile[] = check
     ? [{ ...(check as DailyCheck), profile: { name: target.name, email: target.email, role: r } }]
     : [];
@@ -63,16 +63,14 @@ export default async function RoleChecklistPage({ params }: { params: Promise<{ 
   };
 
   return (
-    <ReadOnlyFrame label={`${LABEL[role]} · Checklist`}>
-      <div className="industrial-grid min-h-screen">
-        <main className="mx-auto max-w-3xl px-5 pb-28 pt-8 md:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Daily checklist</p>
-          <h1 className="mt-3 font-display text-4xl uppercase text-white md:text-5xl">{LABEL[role]}</h1>
-          <div className="mt-8">
-            <DailyCheckSection role={r} preview={preview} />
-          </div>
-        </main>
+    <ViewerShell navRole={navRole} userName={userName}>
+      <div className="mx-auto max-w-3xl px-5 pb-28 md:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">{ROLE_LABELS[r]} checklist</p>
+        <h1 className="mt-3 font-display text-3xl uppercase text-white md:text-4xl">Daily check</h1>
+        <div className="mt-8">
+          <DailyCheckSection role={r} preview={preview} />
+        </div>
       </div>
-    </ReadOnlyFrame>
+    </ViewerShell>
   );
 }
