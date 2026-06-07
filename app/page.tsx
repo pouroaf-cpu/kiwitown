@@ -33,6 +33,7 @@ export default async function RootPage() {
     .from("daily_checks")
     .select("*")
     .eq("profile_id", profile.id)
+    .eq("cadence", "daily")
     .eq("check_date", businessDate())
     .maybeSingle();
 

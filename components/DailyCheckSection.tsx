@@ -2,10 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  CADENCE_LABELS,
   ROLE_LABELS,
+  checkFieldsFor,
   dailyFieldsFor,
   emptyValues,
   isComplete,
+  type Cadence,
 } from "@/lib/dailyChecks";
 import type { DailyCheckWithProfile, DailyValue, UserRole } from "@/lib/types";
 
@@ -37,15 +40,17 @@ function statusOf(check: DailyCheckWithProfile | undefined, role: UserRole) {
 export default function DailyCheckSection({
   role,
   preview,
+  cadence = "daily",
 }: {
   role: UserRole;
   preview?: DailyData;
+  cadence?: Cadence;
 }) {
-  const fields = useMemo(() => dailyFieldsFor(role), [role]);
+  const fields = useMemo(() => checkFieldsFor(role, cadence), [role, cadence]);
   const [data, setData] = useState<DailyData | null>(preview ?? null);
   const [statusRows, setStatusRows] = useState<DailyStatusRow[]>(preview?.statusRows ?? []);
   const [loading, setLoading] = useState(!preview);
-  const [values, setValues] = useState<Record<string, DailyValue>>(emptyValues(role));
+  const [values, setValues] = useState<Record<string, DailyValue>>(emptyValues(role, cadence));
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
@@ -57,8 +62,8 @@ export default function DailyCheckSection({
     (async () => {
       try {
         const [res, statusRes] = await Promise.all([
-          fetch("/api/daily-check"),
-          role === "coo" ? fetch("/api/daily-check/status") : Promise.resolve(null),
+          fetch(`/api/daily-check?cadence=${cadence}`),
+          cadence === "daily" && role === "coo" ? fetch("/api/daily-check/status") : Promise.resolve(null),
         ]);
         if (!res.ok) throw new Error("load");
         const d = (await res.json()) as DailyData;
@@ -66,7 +71,7 @@ export default function DailyCheckSection({
         setData(d);
         const own = d.checks.find((c) => c.profile_id === d.profileId);
         if (own) {
-          setValues({ ...emptyValues(role), ...own.values });
+          setValues({ ...emptyValues(role, cadence), ...own.values });
           setNote(own.note ?? "");
         }
         if (statusRes && statusRes.ok) {
@@ -82,17 +87,17 @@ export default function DailyCheckSection({
     return () => {
       active = false;
     };
-  }, [preview, role]);
+  }, [preview, role, cadence]);
 
   // Seed form from preview's own row.
   useEffect(() => {
     if (!preview) return;
     const own = preview.checks.find((c) => c.profile_id === preview.profileId);
     if (own) {
-      setValues({ ...emptyValues(role), ...own.values });
+      setValues({ ...emptyValues(role, cadence), ...own.values });
       setNote(own.note ?? "");
     }
-  }, [preview, role]);
+  }, [preview, role, cadence]);
 
   async function submit() {
     if (preview) {
@@ -105,7 +110,7 @@ export default function DailyCheckSection({
       const res = await fetch("/api/daily-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ values, note }),
+        body: JSON.stringify({ values, note, cadence }),
       });
       const saved = await res.json();
       if (!res.ok) throw new Error(saved.error || "save");
@@ -131,7 +136,8 @@ export default function DailyCheckSection({
   }
 
   const dateLabel = data?.date ?? "today";
-  const mode = rollupModeFor(role);
+  const mode = cadence === "daily" ? rollupModeFor(role) : "none";
+  const periodLabel = cadence === "daily" ? "Today" : cadence === "weekly" ? "This week" : "This month";
   const checksByProfile = new Map((data?.checks ?? []).map((c) => [c.profile_id, c]));
 
   // Values rollup roster: super_admin → everyone, foreman → sparkies; excl self.
@@ -151,8 +157,8 @@ export default function DailyCheckSection({
       <div className="panel p-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Daily check</p>
-            <h3 className="mt-1 text-lg font-semibold text-white">Today · {dateLabel}</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">{CADENCE_LABELS[cadence]} check</p>
+            <h3 className="mt-1 text-lg font-semibold text-white">{periodLabel} · {dateLabel}</h3>
           </div>
           <span className="text-xs text-text-secondary">{ROLE_LABELS[role]}</span>
         </div>
@@ -213,7 +219,7 @@ export default function DailyCheckSection({
             {notice && <p className="mt-3 text-sm text-brand">{notice}</p>}
 
             <button className="primary-button mt-3 w-full" onClick={submit} disabled={saving}>
-              {saving ? "Saving…" : "Save today's check"}
+              {saving ? "Saving…" : "Save"}
             </button>
           </>
         )}
