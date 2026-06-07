@@ -8,5 +8,5 @@ export default async function ForemanPage() {
   const { supabase, user, profile } = await getViewer();
   if (!user) redirect("/login");
   if (!hasRole(profile, ["foreman"])) redirect("/pending");
-  return <ForemanView supabase={supabase} profile={profile!} />;
+  return <ForemanView supabase={supabase} profile={profile!} showDailyCheck={false} />;
 }

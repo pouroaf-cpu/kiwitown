@@ -5,9 +5,11 @@ import CooDashboard from "./dashboard";
 export default async function CooView({
   supabase,
   profile,
+  showDailyCheck,
 }: {
   supabase: ServerClient;
   profile: Profile;
+  showDailyCheck?: boolean;
 }) {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -29,6 +31,7 @@ export default async function CooView({
       initialAudit={(audit ?? []) as AuditEvent[]}
       month={month}
       year={year}
+      showDailyCheck={showDailyCheck}
     />
   );
 }

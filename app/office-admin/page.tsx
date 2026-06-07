@@ -8,5 +8,5 @@ export default async function OfficeAdminPage() {
   const { supabase, user, profile } = await getViewer();
   if (!user) redirect("/login");
   if (!hasRole(profile, ["office_admin", "super_admin"])) redirect("/pending");
-  return <OfficeAdminView supabase={supabase} profile={profile!} />;
+  return <OfficeAdminView supabase={supabase} profile={profile!} showDailyCheck={false} />;
 }

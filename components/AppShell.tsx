@@ -9,32 +9,23 @@ type NavItem = { href: string; label: string };
 
 // Primary nav per role. Settings + sign-out are appended in the menu itself.
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
-  super_admin: [
-    { href: "/", label: "Dashboard" },
-    { href: "/super-admin", label: "System" },
-    { href: "/coo", label: "Operations" },
-    { href: "/office-admin", label: "Office" },
-  ],
+  super_admin: [{ href: "/settings", label: "Settings" }],
   coo: [
-    { href: "/", label: "Dashboard" },
-    { href: "/coo", label: "Operations" },
+    { href: "/coo", label: "Dashboard" },
+    { href: "/coo/checklist", label: "Checklist" },
   ],
   office_admin: [
-    { href: "/", label: "Dashboard" },
-    { href: "/office-admin", label: "Office" },
+    { href: "/office-admin", label: "Dashboard" },
+    { href: "/office-admin/checklist", label: "Checklist" },
   ],
   foreman: [
-    { href: "/", label: "Dashboard" },
-    { href: "/foreman", label: "Weekly check" },
+    { href: "/foreman", label: "Dashboard" },
+    { href: "/foreman/checklist", label: "Checklist" },
   ],
-  sparky: [{ href: "/", label: "My KPIs" }],
-};
-
-// Roles whose menu shows a Settings entry (user settings / system settings).
-const SETTINGS_HREF: Partial<Record<UserRole, string>> = {
-  super_admin: "/super-admin",
-  coo: "/coo",
-  office_admin: "/office-admin",
+  sparky: [
+    { href: "/sparky", label: "Dashboard" },
+    { href: "/sparky/checklist", label: "Checklist" },
+  ],
 };
 
 function GlassLogo() {
@@ -63,7 +54,6 @@ export default function AppShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const items = NAV_BY_ROLE[role];
-  const settingsHref = SETTINGS_HREF[role];
 
   const NavBody = (
     <div className="flex h-full flex-col gap-1 p-4">
@@ -72,7 +62,7 @@ export default function AppShell({
         <p className="mt-1 truncate text-sm font-medium text-white">{userName}</p>
       </div>
       {items.map((item) => {
-        const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+        const active = pathname === item.href;
         return (
           <Link
             key={item.href}
@@ -86,15 +76,6 @@ export default function AppShell({
           </Link>
         );
       })}
-      {settingsHref && (
-        <Link
-          href={settingsHref}
-          onClick={() => setOpen(false)}
-          className="mt-1 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition hover:bg-white/5 hover:text-white"
-        >
-          Settings
-        </Link>
-      )}
       <button
         onClick={() => {
           setOpen(false);

@@ -10,9 +10,11 @@ import type { Profile } from "@/lib/types";
 export default function OfficeAdminDashboard({
   viewer,
   initialStaff,
+  showDailyCheck = true,
 }: {
   viewer: Profile;
   initialStaff: Profile[];
+  showDailyCheck?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   async function signOut() {
@@ -27,9 +29,11 @@ export default function OfficeAdminDashboard({
         <h1 className="mt-3 font-display text-4xl uppercase text-white md:text-5xl">Office</h1>
         <p className="mt-2 text-text-secondary">{viewer.name || viewer.phone} | daily check &amp; user settings</p>
 
-        <div className="mt-8">
-          <DailyCheckSection role="office_admin" />
-        </div>
+        {showDailyCheck && (
+          <div className="mt-8">
+            <DailyCheckSection role="office_admin" />
+          </div>
+        )}
         <div className="mt-8">
           <UserManagementPanel initialStaff={initialStaff} />
         </div>

@@ -3,31 +3,38 @@ export const preferredRegion = "syd1";
 
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/authorization";
-import SparkyView from "./sparky/SparkyView";
-import ForemanView from "./foreman/ForemanView";
-import CooView from "./coo/CooView";
-import SuperAdminView from "./super-admin/SuperAdminView";
-import OfficeAdminView from "./office-admin/OfficeAdminView";
+import { businessDate, isComplete } from "@/lib/dailyChecks";
+import type { DailyCheck } from "@/lib/types";
 
+const ROLE_BASE: Record<string, string> = {
+  coo: "/coo",
+  office_admin: "/office-admin",
+  foreman: "/foreman",
+  sparky: "/sparky",
+};
+
+// Role-based landing:
+//  super_admin → Settings
+//  coo        → own Dashboard
+//  others     → their Checklist until today's check is complete, then Dashboard
 export default async function RootPage() {
   const { supabase, user, profile } = await getViewer();
-
   if (!user) redirect("/login");
   if (!profile?.role || !profile.active || profile.archived) redirect("/pending");
 
-  // Render the role's dashboard directly — no redirect hop to /sparky etc.
-  switch (profile.role) {
-    case "super_admin":
-      return <SuperAdminView supabase={supabase} profile={profile} />;
-    case "coo":
-      return <CooView supabase={supabase} profile={profile} />;
-    case "office_admin":
-      return <OfficeAdminView supabase={supabase} profile={profile} />;
-    case "foreman":
-      return <ForemanView supabase={supabase} profile={profile} />;
-    case "sparky":
-      return <SparkyView supabase={supabase} profile={profile} />;
-    default:
-      redirect("/pending");
-  }
+  const role = profile.role;
+  if (role === "super_admin") redirect("/settings");
+  if (role === "coo") redirect("/coo");
+
+  const base = ROLE_BASE[role];
+  if (!base) redirect("/pending");
+
+  const { data: check } = await supabase
+    .from("daily_checks")
+    .select("*")
+    .eq("profile_id", profile.id)
+    .eq("check_date", businessDate())
+    .maybeSingle();
+
+  redirect(isComplete((check ?? null) as DailyCheck | null, role) ? base : `${base}/checklist`);
 }

@@ -8,5 +8,5 @@ export default async function CooPage() {
   const { supabase, user, profile } = await getViewer();
   if (!user) redirect("/login");
   if (!hasRole(profile, ["coo", "super_admin"])) redirect("/pending");
-  return <CooView supabase={supabase} profile={profile!} />;
+  return <CooView supabase={supabase} profile={profile!} showDailyCheck={false} />;
 }

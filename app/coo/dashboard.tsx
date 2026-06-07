@@ -18,8 +18,8 @@ function money(value: number) {
   return value.toLocaleString("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 }
 
-export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year, dailyPreview }: {
-  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number; dailyPreview?: DailyData;
+export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year, dailyPreview, showDailyCheck = true }: {
+  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number; dailyPreview?: DailyData; showDailyCheck?: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>("overview");
@@ -124,7 +124,7 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
       </header>
       <main className="mx-auto max-w-7xl px-5 py-6 md:px-8">
         {notice && <div className="mb-6 rounded-xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-brand">{notice}</div>}
-        <DailyCheckSection role="coo" preview={dailyPreview} />
+        {showDailyCheck && <DailyCheckSection role="coo" preview={dailyPreview} />}
         <div className="mb-7 flex gap-2 overflow-x-auto pb-2">
           {tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold ${tab === item.id ? "bg-brand text-bg" : "bg-surface text-text-secondary"}`}>{item.label}</button>)}
         </div>

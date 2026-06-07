@@ -21,6 +21,7 @@ interface Props {
   teamScore: number;
   dailyPreview?: DailyData;
   teamPreview?: TeamRow[];
+  showDailyCheck?: boolean;
 }
 
 export default function SparkyDashboard({
@@ -33,6 +34,7 @@ export default function SparkyDashboard({
   teamScore,
   dailyPreview,
   teamPreview,
+  showDailyCheck = true,
 }: Props) {
   const supabase = createClient();
   const [barWidth, setBarWidth] = useState(0);
@@ -56,7 +58,7 @@ export default function SparkyDashboard({
   return (
     <AppShell role="sparky" userName={sparkyName} onSignOut={signOut}>
       <div className="space-y-4 px-4 pb-28 md:mx-auto md:max-w-5xl md:px-8">
-        <DailyCheckSection role="sparky" preview={dailyPreview} />
+        {showDailyCheck && <DailyCheckSection role="sparky" preview={dailyPreview} />}
 
         <TeamCompletion preview={teamPreview} />
 

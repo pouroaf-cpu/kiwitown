@@ -6,9 +6,11 @@ import SparkyDashboard from "./dashboard";
 export default async function SparkyView({
   supabase,
   profile,
+  showDailyCheck,
 }: {
   supabase: ServerClient;
   profile: Profile;
+  showDailyCheck?: boolean;
 }) {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -43,6 +45,7 @@ export default async function SparkyView({
       currentYear={year}
       targets={resolveTargets((targets ?? []) as KpiTarget[], profile.id)}
       teamScore={Number(teamScore ?? 0)}
+      showDailyCheck={showDailyCheck}
     />
   );
 }
