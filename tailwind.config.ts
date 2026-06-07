@@ -13,10 +13,10 @@ const config: Config = {
         bg: "#0B0D12",
         surface: "#13161E",
         border: "#1E2230",
-        muted: "#6B7280",
+        muted: "#A3ABBA",
         text: {
           primary: "#F9FAFB",
-          secondary: "#9CA3AF",
+          secondary: "#D7DCE5",
         },
       },
       fontFamily: {
