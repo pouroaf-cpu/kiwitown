@@ -22,38 +22,29 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super admin",
   coo: "COO",
   office_admin: "Office admin",
-  foreman: "Operating manager",
+  foreman: "Operations Manager",
   sparky: "Sparky",
 };
 
 export const DAILY_CHECKS: Record<UserRole, DailyField[]> = {
   sparky: [
-    { key: "hours_charged", label: "Hours charged out", type: "number", unit: "h", target: 8 },
-    { key: "job_cards", label: "Job cards completed", type: "number", target: 4 },
-    { key: "callbacks", label: "Callbacks today", type: "number", target: 0 },
     { key: "timesheet_submitted", label: "Timesheet submitted", type: "boolean" },
-    { key: "prestart_done", label: "Pre-start / safety check done", type: "boolean" },
+    { key: "job_card_completed", label: "Job card completed with notes", type: "boolean" },
+    { key: "photos_taken", label: "Photos taken", type: "boolean" },
+    { key: "premob_checklist", label: "Pre-mob checklist done", type: "boolean" },
   ],
   foreman: [
-    { key: "jobs_over_budget", label: "Jobs over budget flagged", type: "number" },
-    { key: "sparkies_short_hours", label: "Sparkies short on hours", type: "number" },
-    { key: "crew_prestarts_reviewed", label: "Crew pre-starts reviewed", type: "boolean" },
-    { key: "variations_approved", label: "Variations approved before work", type: "boolean" },
-    { key: "hs_site_walk", label: "H&S site walk done", type: "boolean" },
-  ],
-  coo: [
-    { key: "jobs_invoiced", label: "Jobs invoiced today", type: "number" },
-    { key: "escalations_actioned", label: "Escalations actioned", type: "number" },
-    { key: "wip_reviewed", label: "WIP / cashflow reviewed", type: "boolean" },
-    { key: "revenue_checked", label: "Daily revenue checked", type: "boolean" },
+    { key: "jobs_confirmed", label: "Jobs scheduled for tomorrow confirmed", type: "boolean" },
+    { key: "site_issues_flagged", label: "Site issues flagged", type: "boolean" },
   ],
   office_admin: [
-    { key: "invoices_sent", label: "Invoices sent", type: "number" },
-    { key: "supplier_bills", label: "Supplier bills entered", type: "number" },
-    { key: "timesheets_reconciled", label: "Timesheets reconciled", type: "boolean" },
-    { key: "inbox_cleared", label: "Inbox / phones cleared", type: "boolean" },
+    { key: "invoices_sent", label: "Invoices sent", type: "number", target: 5 },
+    { key: "overdue_followups", label: "Overdue invoice follow-ups", type: "number" },
+    { key: "job_cards_filed", label: "Job cards received and filed", type: "boolean" },
+    { key: "quote_followups", label: "Quote follow-ups done", type: "boolean" },
   ],
-  // super_admin oversees only — no daily check of its own.
+  // COO's checks are weekly/monthly (pending the cadence build); super_admin oversees only.
+  coo: [],
   super_admin: [],
 };
 
