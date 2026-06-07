@@ -8,15 +8,36 @@ import type { UserRole } from "@/lib/types";
 type NavItem = { href: string; label: string };
 
 // Primary nav per role. Settings + sign-out are appended in the menu itself.
+// Read-only cross-role views live under /roles/[role]. super_admin + COO see
+// everyone; COO's own pages link to the editable /coo routes.
+const ALL_ACCESS: NavItem[] = [
+  { href: "/roles/coo", label: "COO · Dashboard" },
+  { href: "/roles/coo/checklist", label: "COO · Checklist" },
+  { href: "/roles/foreman", label: "Ops · Dashboard" },
+  { href: "/roles/foreman/checklist", label: "Ops · Checklist" },
+  { href: "/roles/office-admin", label: "Office · Dashboard" },
+  { href: "/roles/office-admin/checklist", label: "Office · Checklist" },
+  { href: "/roles/sparky", label: "Sparky · Dashboard" },
+  { href: "/roles/sparky/checklist", label: "Sparky · Checklist" },
+];
+
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
-  super_admin: [{ href: "/settings", label: "Settings" }],
+  super_admin: [{ href: "/settings", label: "Settings" }, ...ALL_ACCESS],
   coo: [
-    { href: "/coo", label: "Dashboard" },
-    { href: "/coo/checklist", label: "Checklist" },
+    { href: "/coo", label: "My Dashboard" },
+    { href: "/coo/checklist", label: "My Checklist" },
+    { href: "/roles/foreman", label: "Ops · Dashboard" },
+    { href: "/roles/foreman/checklist", label: "Ops · Checklist" },
+    { href: "/roles/office-admin", label: "Office · Dashboard" },
+    { href: "/roles/office-admin/checklist", label: "Office · Checklist" },
+    { href: "/roles/sparky", label: "Sparky · Dashboard" },
+    { href: "/roles/sparky/checklist", label: "Sparky · Checklist" },
+    { href: "/settings", label: "Settings" },
   ],
   office_admin: [
     { href: "/office-admin", label: "Dashboard" },
     { href: "/office-admin/checklist", label: "Checklist" },
+    { href: "/settings", label: "Settings" },
   ],
   foreman: [
     { href: "/foreman", label: "Dashboard" },
