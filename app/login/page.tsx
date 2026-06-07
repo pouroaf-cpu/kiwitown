@@ -3,48 +3,93 @@
 import { FormEvent, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+type Channel = "phone" | "email";
+
+// Best-effort NZ → E.164. Users may type 021…, 6421…, or +6421….
+function toE164NZ(raw: string): string {
+  const t = raw.replace(/[\s()-]/g, "");
+  if (t.startsWith("+")) return t;
+  if (t.startsWith("0")) return "+64" + t.slice(1);
+  if (t.startsWith("64")) return "+" + t;
+  return t;
+}
+
 export default function LoginPage() {
   const supabase = useMemo(() => createClient(), []);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [name, setName] = useState("");
+  const [channel, setChannel] = useState<Channel>("phone");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    setLoading(true);
+  function reset() {
     setError("");
     setMessage("");
+  }
+  function switchChannel(next: Channel) {
+    setChannel(next);
+    setOtpSent(false);
+    setOtp("");
+    reset();
+  }
 
-    const { data, error: authError } =
-      mode === "signin"
-        ? await supabase.auth.signInWithPassword({ email: cleanEmail, password })
-        : await supabase.auth.signUp({
-            email: cleanEmail,
-            password,
-            options: {
-              data: { name: name.trim() },
-              emailRedirectTo: `${window.location.origin}/auth/confirm?next=/`,
-            },
-          });
-
-    setLoading(false);
-    if (authError) {
-      setError(authError.message);
-      return;
-    }
-
-    if (mode === "signup" && !data.session) {
-      setMessage("Account created. Check your email to confirm access, then sign in.");
-      return;
-    }
-
+  async function handleEmail() {
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (authError) return setError(authError.message);
     window.location.assign("/");
   }
+
+  async function handlePhone() {
+    const cleanPhone = toE164NZ(phone);
+    if (!otpSent) {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || "Could not send code.");
+      setOtpSent(true);
+      return setMessage(`We texted a 6-digit code to ${cleanPhone}.`);
+    }
+    const res = await fetch("/api/auth/otp/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: cleanPhone, code: otp.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) return setError(data.error || "That code is incorrect or expired.");
+    window.location.assign("/");
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    reset();
+    try {
+      if (channel === "phone") await handlePhone();
+      else await handleEmail();
+    } catch {
+      setError("Network error — please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const submitLabel = loading
+    ? "Working..."
+    : channel === "phone"
+      ? otpSent
+        ? "Verify & continue"
+        : "Text me a code"
+      : "Sign in";
 
   return (
     <main className="industrial-grid min-h-screen px-5 py-8 md:flex md:items-center md:justify-center">
@@ -66,82 +111,109 @@ export default function LoginPage() {
         <section className="panel relative w-full overflow-hidden p-6 md:max-w-md md:p-8">
           <div className="absolute right-0 top-0 h-24 w-24 border-b border-l border-brand/25 bg-brand/5" />
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand">Secure access</p>
-          <h2 className="mt-3 text-2xl font-semibold text-white">
-            {mode === "signin" ? "Sign in by email" : "Create your account"}
-          </h2>
+          <h2 className="mt-3 text-2xl font-semibold text-white">Sign in</h2>
           <p className="mt-2 text-sm text-text-secondary">
-            {mode === "signin"
-              ? "Use your registered email address and password."
-              : "Register with email. Daniel or a super admin assigns your role after first login."}
+            {channel === "phone"
+              ? "Enter your mobile number and we'll text you a one-time code. Accounts are set up by an admin."
+              : "Office/owner accounts: sign in with your email and password."}
           </p>
+
+          {/* Channel: phone / email */}
           <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-black/20 p-1">
             <button
-              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${mode === "signin" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
-              onClick={() => {
-                setMode("signin");
-                setError("");
-                setMessage("");
-              }}
               type="button"
+              onClick={() => switchChannel("phone")}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${channel === "phone" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
             >
-              Sign in
+              Phone
             </button>
             <button
-              className={`rounded-xl px-4 py-3 text-sm font-semibold transition ${mode === "signup" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
-              onClick={() => {
-                setMode("signup");
-                setError("");
-                setMessage("");
-              }}
               type="button"
+              onClick={() => switchChannel("email")}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${channel === "email" ? "bg-brand text-background" : "text-text-secondary hover:text-white"}`}
             >
-              Register
+              Email
             </button>
           </div>
-          <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-            {mode === "signup" && (
+
+          <form className="mt-7 space-y-5" onSubmit={handleSubmit}>
+            {channel === "phone" && !otpSent && (
               <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
-                Full name
+                Mobile number
                 <input
                   className="field mt-3"
-                  autoComplete="name"
-                  placeholder="Daniel Frew"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  placeholder="+64 21 123 4567"
                   required
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
                 />
               </label>
             )}
-            <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
-              Email address
-              <input
-                className="field mt-3"
-                autoComplete="email"
-                inputMode="email"
-                placeholder="name@kiwitown.co.nz"
-                required
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </label>
-            <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
-              Password
-              <input
-                className="field mt-3"
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                minLength={8}
-                placeholder="Minimum 8 characters"
-                required
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </label>
+
+            {channel === "phone" && otpSent && (
+              <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+                Code
+                <input
+                  className="field mt-3 tracking-[0.4em]"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  required
+                  value={otp}
+                  onChange={(event) => setOtp(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                    reset();
+                  }}
+                  className="mt-3 text-xs font-semibold normal-case tracking-normal text-brand"
+                >
+                  Use a different number
+                </button>
+              </label>
+            )}
+
+            {channel === "email" && (
+              <>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+                  Email address
+                  <input
+                    className="field mt-3"
+                    autoComplete="email"
+                    inputMode="email"
+                    placeholder="name@kiwitown.co.nz"
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
+                </label>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-text-secondary">
+                  Password
+                  <input
+                    className="field mt-3"
+                    autoComplete="current-password"
+                    required
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                </label>
+              </>
+            )}
+
             <button className="primary-button" disabled={loading} type="submit">
-              {loading ? "Working..." : mode === "signin" ? "Sign in" : "Create account"}
+              {submitLabel}
             </button>
           </form>
+
           {message && <p className="mt-5 rounded-xl border border-brand/25 bg-brand/10 p-3 text-sm text-brand">{message}</p>}
           {error && <p className="mt-5 rounded-xl border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
         </section>

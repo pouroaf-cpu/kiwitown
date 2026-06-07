@@ -5,9 +5,11 @@ import Link from "next/link";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
+import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
+import UserManagementPanel from "@/components/UserManagementPanel";
 import type { Profile, SystemSettings, UserRole } from "@/lib/types";
 
-export default function SuperAdminDashboard({ viewer, initialSettings, initialStaff }: { viewer: Profile; initialSettings: SystemSettings; initialStaff: Profile[] }) {
+export default function SuperAdminDashboard({ viewer, initialSettings, initialStaff, dailyPreview }: { viewer: Profile; initialSettings: SystemSettings; initialStaff: Profile[]; dailyPreview?: DailyData }) {
   const supabase = useMemo(() => createClient(), []);
   const [settings, setSettings] = useState(initialSettings);
   const [staff, setStaff] = useState(initialStaff);
@@ -51,6 +53,12 @@ export default function SuperAdminDashboard({ viewer, initialSettings, initialSt
           <Link href="/coo" className="primary-button !w-auto">Open COO operations</Link>
         </div>
         {notice && <p className="mt-7 rounded-xl border border-brand/20 bg-brand/10 p-4 text-sm text-brand">{notice}</p>}
+        <div className="mt-8">
+          <DailyCheckSection role="super_admin" preview={dailyPreview} />
+        </div>
+        <div className="mt-8">
+          <UserManagementPanel initialStaff={staff} canAssignSuperAdmin showList={false} />
+        </div>
         <div className="mt-8 grid gap-6 lg:grid-cols-[400px_1fr]">
           <form onSubmit={saveBrand} className="panel space-y-5 p-6">
             <div><p className="text-xs uppercase tracking-widest text-brand">White label</p><h2 className="mt-2 text-xl font-semibold">Business identity</h2></div>

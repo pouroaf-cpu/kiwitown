@@ -1,4 +1,4 @@
-export type UserRole = "super_admin" | "coo" | "foreman" | "sparky";
+export type UserRole = "super_admin" | "coo" | "office_admin" | "foreman" | "sparky";
 export type KpiType = "charge_out" | "job_cards" | "callbacks" | "timesheets_days";
 
 export interface Profile {
@@ -78,4 +78,22 @@ export interface SystemSettings {
   logo_url: string | null;
   brand_colour: string;
   default_bonus_pct: number;
+}
+
+export type DailyValue = number | boolean;
+
+export interface DailyCheck {
+  id: string;
+  profile_id: string;
+  role: UserRole;
+  check_date: string;
+  values: Record<string, DailyValue>;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// daily_checks row joined with the submitter's profile (for manager rollups).
+export interface DailyCheckWithProfile extends DailyCheck {
+  profile: { name: string; email: string; role: UserRole } | null;
 }

@@ -31,10 +31,20 @@ export async function middleware(request: NextRequest) {
 
   let supabaseResponse = NextResponse.next({ request });
 
+  // Bound the auth fetch so a slow/unreachable Supabase backend can't hang the
+  // middleware until Vercel kills the invocation (which 504s the whole site).
+  // The signal aborts the underlying request, not just our await.
+  const controller = new AbortController();
+  const authTimeout = setTimeout(() => controller.abort(), 5000);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, signal: controller.signal }),
+      },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -55,8 +65,21 @@ export async function middleware(request: NextRequest) {
   // Do not run code between createServerClient and getClaims() — getClaims()
   // both refreshes the session cookie and validates the JWT locally against
   // the project's published ES256 key (no Auth-server round trip).
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims ?? null;
+  let user: unknown = null;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    user = data?.claims ?? null;
+  } catch {
+    // Supabase unreachable or timed out. Fail closed: keep protected routes
+    // behind the login page rather than throwing a 504. Data access stays
+    // protected server-side (RLS + getViewer), so this is routing only.
+    clearTimeout(authTimeout);
+    if (!isPublic) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    return NextResponse.next({ request });
+  }
+  clearTimeout(authTimeout);
 
   // Not logged in → redirect to login
   if (!user && !isPublic) {

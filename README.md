@@ -20,6 +20,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Environment variables
+
+Copy `.env.local.example` to `.env.local` and fill in:
+
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase project URL + publishable key
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only Supabase secret key (never exposed client-side)
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SERVICE_SID` — Twilio Verify (phone OTP login)
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` — Web Push
+- `CRON_SECRET` — protects the notification cron endpoint
+
+### Phone login (Twilio Verify)
+
+Logins use phone-number OTP via [Twilio Verify](https://www.twilio.com/docs/verify/api) — managed OTP, so no
+phone-number purchase, Messaging Service, or A2P 10DLC registration is required. Create a Verify Service in the
+Twilio Console (Verify → Services) and set its SID (`VA...`) as `TWILIO_VERIFY_SERVICE_SID`. Phone numbers must
+be E.164 (e.g. `+64211234567`). The app sends a code (`Verifications`) and checks it (`VerificationCheck`);
+Verify composes the message and handles rate limiting/retries.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

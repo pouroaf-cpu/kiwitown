@@ -6,6 +6,7 @@ import type { UserRole } from "@/lib/types";
 const homeForRole: Record<UserRole, { href: string; label: string }> = {
   super_admin: { href: "/super-admin", label: "System" },
   coo: { href: "/coo", label: "Operations" },
+  office_admin: { href: "/office-admin", label: "Office" },
   foreman: { href: "/foreman", label: "Weekly check" },
   sparky: { href: "/sparky", label: "My KPIs" },
 };

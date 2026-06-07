@@ -10,6 +10,7 @@ const linksByRole: Record<UserRole, { href: string; label: string }[]> = {
     { href: "/coo", label: "Operations" },
   ],
   coo: [{ href: "/coo", label: "Operations" }],
+  office_admin: [{ href: "/office-admin", label: "Office" }],
   foreman: [{ href: "/foreman", label: "Weekly check" }],
   sparky: [{ href: "/sparky", label: "My KPIs" }],
 };

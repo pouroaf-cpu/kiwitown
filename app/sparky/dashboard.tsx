@@ -6,6 +6,7 @@ import type { KpiEntry, KpiType } from "@/lib/types";
 import BottomNav from "@/components/BottomNav";
 import TopNav from "@/components/TopNav";
 import NotificationPrompt from "@/components/NotificationPrompt";
+import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -92,6 +93,7 @@ interface Props {
   currentYear: number;
   targets: Record<KpiType, number>;
   teamScore: number;
+  dailyPreview?: DailyData;
 }
 
 export default function SparkyDashboard({
@@ -102,6 +104,7 @@ export default function SparkyDashboard({
   currentYear,
   targets,
   teamScore,
+  dailyPreview,
 }: Props) {
   const supabase = createClient();
   const [barWidth, setBarWidth] = useState(0);
@@ -146,6 +149,8 @@ export default function SparkyDashboard({
 
       {/* ── Content ── */}
       <div className="px-4 pt-5 md:px-8 md:pt-8 md:max-w-5xl md:mx-auto space-y-4 md:space-y-0">
+
+        <DailyCheckSection role="sparky" preview={dailyPreview} />
 
         {/* Desktop: 2-column layout. Mobile: stacked. */}
         <div className="md:grid md:grid-cols-5 md:gap-6 space-y-4 md:space-y-0">

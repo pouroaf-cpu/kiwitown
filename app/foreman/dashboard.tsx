@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
+import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
 import type { ChecklistItem, KpiEntry, WeeklySubmission } from "@/lib/types";
 
 const prompts = [
@@ -14,9 +15,9 @@ const prompts = [
   ["support", "What support or training is required?"],
 ];
 
-export default function ForemanDashboard({ foremanName, weekNum, year, existingSubmission, history, checklistItems, teamEntries, sparkies }: {
+export default function ForemanDashboard({ foremanName, weekNum, year, existingSubmission, history, checklistItems, teamEntries, sparkies, dailyPreview }: {
   foremanName: string; weekNum: number; year: number; existingSubmission: WeeklySubmission | null; history: WeeklySubmission[];
-  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; email: string; phone: string }[];
+  checklistItems: ChecklistItem[]; teamEntries: KpiEntry[]; sparkies: { id: string; name: string; email: string; phone: string }[]; dailyPreview?: DailyData;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [checks, setChecks] = useState<Record<string, boolean>>(existingSubmission?.checklist ?? {});
@@ -63,6 +64,9 @@ export default function ForemanDashboard({ foremanName, weekNum, year, existingS
           </div>
         </div>
         {notice && <p className="mt-6 rounded-xl border border-brand/20 bg-brand/10 p-4 text-sm text-brand">{notice}</p>}
+        <div className="mt-8">
+          <DailyCheckSection role="foreman" preview={dailyPreview} />
+        </div>
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_350px]">
           <section className="space-y-4">
             {Object.entries(groups).map(([category, items]) => (

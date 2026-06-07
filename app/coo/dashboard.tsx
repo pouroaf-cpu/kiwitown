@@ -4,6 +4,8 @@ import { FormEvent, useMemo, useState } from "react";
 import TopNav from "@/components/TopNav";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
+import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
+import UserManagementPanel from "@/components/UserManagementPanel";
 import type { AuditEvent, ChecklistItem, KpiEntry, KpiTarget, Profile, UserRole } from "@/lib/types";
 
 type Tab = "overview" | "entry" | "staff" | "checklist" | "targets" | "audit";
@@ -11,14 +13,14 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "overview", label: "Month overview" }, { id: "entry", label: "KPI entry" }, { id: "staff", label: "Staff" },
   { id: "checklist", label: "Checklist" }, { id: "targets", label: "Targets" }, { id: "audit", label: "Audit log" },
 ];
-const roleOptions: (UserRole | "")[] = ["", "super_admin", "coo", "foreman", "sparky"];
+const roleOptions: (UserRole | "")[] = ["", "super_admin", "coo", "office_admin", "foreman", "sparky"];
 
 function money(value: number) {
   return value.toLocaleString("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 }
 
-export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year }: {
-  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number;
+export default function CooDashboard({ viewer, initialStaff, initialEntries, initialChecklist, initialTargets, initialAudit, month, year, dailyPreview }: {
+  viewer: Profile; initialStaff: Profile[]; initialEntries: KpiEntry[]; initialChecklist: ChecklistItem[]; initialTargets: KpiTarget[]; initialAudit: AuditEvent[]; month: number; year: number; dailyPreview?: DailyData;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [tab, setTab] = useState<Tab>("overview");
@@ -124,6 +126,7 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
       </header>
       <main className="mx-auto max-w-7xl px-5 py-6 md:px-8">
         {notice && <div className="mb-6 rounded-xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-brand">{notice}</div>}
+        <DailyCheckSection role="coo" preview={dailyPreview} />
         <div className="mb-7 flex gap-2 overflow-x-auto pb-2">
           {tabs.map((item) => <button key={item.id} onClick={() => setTab(item.id)} className={`whitespace-nowrap rounded-xl px-4 py-3 text-sm font-semibold ${tab === item.id ? "bg-brand text-bg" : "bg-surface text-text-secondary"}`}>{item.label}</button>)}
         </div>
@@ -138,6 +141,7 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
           {[["charge_out", "Charge out %"], ["job_cards", "Job cards"], ["callbacks", "Callbacks"], ["timesheets_days", "Timesheets days"]].map(([name, label]) => <label key={name} className="text-xs uppercase tracking-widest text-text-secondary">{label}<input className="field mt-2" name={name} type="number" step="0.01" min="0" required /></label>)}
           <button className="primary-button md:col-span-2" type="submit">Save monthly KPI</button>
         </form>}
+        {tab === "staff" && <div className="mb-6"><UserManagementPanel initialStaff={staff} showList={false} /></div>}
         {tab === "staff" && <div className="panel overflow-hidden">{staff.map((member) => <div key={member.id} className="flex flex-col gap-3 border-b border-border p-4 last:border-0 md:flex-row md:items-center"><div className="flex-1"><p className="font-medium">{member.name || "Pending profile"}</p><p className="text-xs text-text-secondary">{member.email || member.phone || "No email recorded"}</p></div><select value={member.role || ""} onChange={(event) => updateRole(member.id, event.target.value)} className="field !w-auto min-w-40" disabled={member.role === "super_admin" && viewer.role !== "super_admin"}>{roleOptions.map((role) => <option key={role || "none"} value={role}>{role || "No role"}</option>)}</select>{member.id !== viewer.id && <button onClick={() => archiveStaff(member.id)} className="secondary-button !w-auto text-red-300">Archive</button>}</div>)}</div>}
         {tab === "checklist" && <section className="grid gap-5 lg:grid-cols-[1fr_360px]"><div className="panel overflow-hidden">{checklist.map((item) => <div key={item.id} className="flex items-center gap-4 border-b border-border p-4 last:border-0"><span className="h-3 w-3 rounded-full" style={{ background: item.colour }} /><div className="flex-1"><p className={item.active ? "" : "text-text-secondary line-through"}>{item.label}</p><p className="text-xs text-text-secondary">{item.category}</p></div>{item.active && <button className="secondary-button !w-auto" onClick={() => disableChecklistItem(item)}>Retire</button>}</div>)}</div><form className="panel space-y-4 p-5" onSubmit={addChecklistItem}><h2 className="text-lg font-semibold">Add checklist item</h2><input className="field" name="label" placeholder="Checklist task" required /><input className="field" name="category" placeholder="Category" required /><input className="field h-12" name="colour" type="color" defaultValue="#00AEEF" /><button className="primary-button" type="submit">Add item</button></form></section>}
         {tab === "targets" && <section className="grid gap-5 lg:grid-cols-[1fr_360px]"><div className="panel overflow-hidden">{targets.slice(0, 12).map((target) => <div key={target.id} className="grid grid-cols-[1fr_auto] border-b border-border p-4 text-sm last:border-0"><span className="capitalize">{target.target_type.replace("_", " ")} {target.sparky_id ? "(individual)" : "(global)"}</span><span className="text-brand">{target.value} from {target.effective_from}</span></div>)}</div><form className="panel space-y-4 p-5" onSubmit={saveTarget}><h2 className="text-lg font-semibold">New target version</h2><select className="field" name="target_type" required>{["charge_out", "job_cards", "callbacks", "timesheets_days"].map((type) => <option key={type}>{type}</option>)}</select><select className="field" name="sparky_id"><option value="">Global target</option>{sparkies.map((sparky) => <option key={sparky.id} value={sparky.id}>{sparky.name}</option>)}</select><input className="field" name="value" type="number" step="0.01" min="0" required /><input className="field" name="effective_from" type="date" required /><button className="primary-button">Save version</button></form></section>}

@@ -7,6 +7,7 @@ import SparkyView from "./sparky/SparkyView";
 import ForemanView from "./foreman/ForemanView";
 import CooView from "./coo/CooView";
 import SuperAdminView from "./super-admin/SuperAdminView";
+import OfficeAdminView from "./office-admin/OfficeAdminView";
 
 export default async function RootPage() {
   const { supabase, user, profile } = await getViewer();
@@ -20,6 +21,8 @@ export default async function RootPage() {
       return <SuperAdminView supabase={supabase} profile={profile} />;
     case "coo":
       return <CooView supabase={supabase} profile={profile} />;
+    case "office_admin":
+      return <OfficeAdminView supabase={supabase} profile={profile} />;
     case "foreman":
       return <ForemanView supabase={supabase} profile={profile} />;
     case "sparky":
