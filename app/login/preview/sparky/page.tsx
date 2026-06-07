@@ -4,9 +4,10 @@ import {
   CURRENT_MONTH,
   CURRENT_YEAR,
   DAILY_DATA_SPARKY,
+  SPARKY_ENTRIES,
   SPARKY_ENTRY,
-  SPARKY_HISTORY,
   TARGETS_RECORD,
+  TEAM_COMPLETION,
   TEAM_SCORE,
 } from "@/lib/preview/demoData";
 
@@ -19,12 +20,13 @@ export default function PreviewSparky() {
       <SparkyDashboard
         sparkyName="Alex Wired"
         kpiEntry={SPARKY_ENTRY}
-        history={SPARKY_HISTORY}
+        entries={SPARKY_ENTRIES}
         currentMonth={CURRENT_MONTH}
         currentYear={CURRENT_YEAR}
         targets={TARGETS_RECORD}
         teamScore={TEAM_SCORE}
         dailyPreview={DAILY_DATA_SPARKY}
+        teamPreview={TEAM_COMPLETION}
       />
     </>
   );

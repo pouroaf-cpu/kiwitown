@@ -25,11 +25,11 @@ export default async function SparkyView({
       .maybeSingle(),
     supabase
       .from("kpi_entries")
-      .select("month, year, score, bonus_earned")
+      .select("*")
       .eq("sparky_id", profile.id)
       .order("year", { ascending: false })
       .order("month", { ascending: false })
-      .limit(6),
+      .limit(12),
     supabase.from("kpi_targets").select("*").eq("archived", false).order("effective_from", { ascending: false }),
     supabase.rpc("get_team_score", { p_month: month, p_year: year }),
   ]);
@@ -38,7 +38,7 @@ export default async function SparkyView({
     <SparkyDashboard
       sparkyName={profile.name?.trim() || profile.email || profile.phone || "Sparky"}
       kpiEntry={(kpiEntry ?? null) as KpiEntry | null}
-      history={(history ?? []) as Pick<KpiEntry, "month" | "year" | "score" | "bonus_earned">[]}
+      entries={(history ?? []) as KpiEntry[]}
       currentMonth={month}
       currentYear={year}
       targets={resolveTargets((targets ?? []) as KpiTarget[], profile.id)}

@@ -15,6 +15,7 @@ import type {
   KpiType,
   Profile,
   SystemSettings,
+  UserRole,
   WeeklySubmission,
 } from "@/lib/types";
 import type { DailyData } from "@/components/DailyCheckSection";
@@ -129,6 +130,44 @@ export const SPARKY_HISTORY: Pick<
   { month: 1, year: 2026, score: 90, bonus_earned: 580 },
 ];
 export const TEAM_SCORE = 80.8;
+
+// Full monthly KPI history for the single-sparky preview (Alex Wired) → charts.
+function hist(
+  month: number,
+  year: number,
+  charge_out: number,
+  job_cards: number,
+  callbacks: number,
+  timesheets_days: number,
+  score: number,
+  bonus_earned: number
+): KpiEntry {
+  return {
+    id: `ke-${year}-${month}`,
+    sparky_id: "p-spark-1",
+    month,
+    year,
+    charge_out,
+    job_cards,
+    callbacks,
+    timesheets_days,
+    score,
+    bonus_earned,
+    source: "manual",
+    month_closed_at: null,
+    archived: false,
+    created_at: NOW,
+  };
+}
+
+export const SPARKY_ENTRIES: KpiEntry[] = [
+  hist(1, 2026, 88, 22, 1, 10, 90, 580),
+  hist(2, 2026, 84, 19, 2, 9, 84, 450),
+  hist(3, 2026, 79, 16, 3, 8, 79, 320),
+  hist(4, 2026, 90, 23, 1, 10, 91, 600),
+  hist(5, 2026, 86, 20, 1, 9, 88, 540),
+  hist(6, 2026, 92, 24, 0, 10, 94, 640),
+];
 
 // ── Checklist (the 10 seeded items) ─────────────────────────────────────────
 const CHECKLIST_SEED: [string, string, string, number][] = [
@@ -264,3 +303,17 @@ export const DAILY_DATA_SUPER_ADMIN = dailyDataFor(SUPER_ADMIN);
 export const DAILY_DATA_COO = dailyDataFor(COO);
 export const DAILY_DATA_FOREMAN = dailyDataFor(FOREMAN);
 export const DAILY_DATA_SPARKY = dailyDataFor(SPARKIES[0]);
+
+// Anonymised team completion (per-role counts) for the sparky team widget.
+export const TEAM_COMPLETION: { role: UserRole; total: number; submitted: number }[] = (() => {
+  const submittedIds = new Set(ALL_DAILY_CHECKS.map((c) => c.profile_id));
+  const byRole = new Map<UserRole, { total: number; submitted: number }>();
+  for (const p of ALL_STAFF) {
+    const r = p.role as UserRole;
+    const cur = byRole.get(r) ?? { total: 0, submitted: 0 };
+    cur.total += 1;
+    if (submittedIds.has(p.id)) cur.submitted += 1;
+    byRole.set(r, cur);
+  }
+  return Array.from(byRole.entries()).map(([role, v]) => ({ role, total: v.total, submitted: v.submitted }));
+})();

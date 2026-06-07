@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import TopNav from "@/components/TopNav";
-import BottomNav from "@/components/BottomNav";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
 import type { ChecklistItem, KpiEntry, WeeklySubmission } from "@/lib/types";
@@ -47,8 +46,7 @@ export default function ForemanDashboard({ foremanName, weekNum, year, existingS
   }
 
   return (
-    <div className="industrial-grid min-h-screen pb-28 md:pb-12">
-      <TopNav role="foreman" userName={foremanName} onSignOut={signOut} />
+    <AppShell role="foreman" userName={foremanName} onSignOut={signOut}>
       <main className="mx-auto max-w-6xl px-5 py-7 md:px-8 md:py-10">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
@@ -102,7 +100,6 @@ export default function ForemanDashboard({ foremanName, weekNum, year, existingS
           </aside>
         </div>
       </main>
-      <BottomNav role="foreman" />
-    </div>
+    </AppShell>
   );
 }

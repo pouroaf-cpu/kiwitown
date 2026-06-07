@@ -1,8 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import TopNav from "@/components/TopNav";
-import BottomNav from "@/components/BottomNav";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
 import UserManagementPanel from "@/components/UserManagementPanel";
@@ -106,8 +105,7 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
   }
 
   return (
-    <div className="industrial-grid min-h-screen pb-24 md:pb-10">
-      <TopNav role={viewer.role!} userName={viewer.name || viewer.email || viewer.phone || "COO"} onSignOut={signOut} />
+    <AppShell role={viewer.role!} userName={viewer.name || viewer.email || viewer.phone || "COO"} onSignOut={signOut}>
       <header className="border-b border-border px-5 pb-6 pt-7 md:px-8 md:pt-10">
         <div className="mx-auto max-w-7xl">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand">Operations control</p>
@@ -147,7 +145,6 @@ export default function CooDashboard({ viewer, initialStaff, initialEntries, ini
         {tab === "targets" && <section className="grid gap-5 lg:grid-cols-[1fr_360px]"><div className="panel overflow-hidden">{targets.slice(0, 12).map((target) => <div key={target.id} className="grid grid-cols-[1fr_auto] border-b border-border p-4 text-sm last:border-0"><span className="capitalize">{target.target_type.replace("_", " ")} {target.sparky_id ? "(individual)" : "(global)"}</span><span className="text-brand">{target.value} from {target.effective_from}</span></div>)}</div><form className="panel space-y-4 p-5" onSubmit={saveTarget}><h2 className="text-lg font-semibold">New target version</h2><select className="field" name="target_type" required>{["charge_out", "job_cards", "callbacks", "timesheets_days"].map((type) => <option key={type}>{type}</option>)}</select><select className="field" name="sparky_id"><option value="">Global target</option>{sparkies.map((sparky) => <option key={sparky.id} value={sparky.id}>{sparky.name}</option>)}</select><input className="field" name="value" type="number" step="0.01" min="0" required /><input className="field" name="effective_from" type="date" required /><button className="primary-button">Save version</button></form></section>}
         {tab === "audit" && <div className="panel overflow-hidden">{audit.length ? audit.map((event) => <div key={event.id} className="flex items-center justify-between gap-4 border-b border-border p-4 text-sm last:border-0"><div><span className="text-brand">{event.action.toUpperCase()}</span> <span className="text-white">{event.table_name}</span></div><time className="text-xs text-text-secondary">{new Date(event.created_at).toLocaleString("en-NZ")}</time></div>) : <p className="p-6 text-text-secondary">Audit entries appear after manager changes.</p>}</div>}
       </main>
-      <BottomNav role={viewer.role!} />
-    </div>
+    </AppShell>
   );
 }

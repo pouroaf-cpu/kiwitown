@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import TopNav from "@/components/TopNav";
-import BottomNav from "@/components/BottomNav";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import DailyCheckSection from "@/components/DailyCheckSection";
 import UserManagementPanel from "@/components/UserManagementPanel";
@@ -22,8 +21,7 @@ export default function OfficeAdminDashboard({
   }
 
   return (
-    <div className="industrial-grid min-h-screen pb-28 md:pb-12">
-      <TopNav role="office_admin" userName={viewer.name || viewer.phone || "Office admin"} onSignOut={signOut} />
+    <AppShell role="office_admin" userName={viewer.name || viewer.phone || "Office admin"} onSignOut={signOut}>
       <main className="mx-auto max-w-6xl px-5 py-7 md:px-8 md:py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Office admin</p>
         <h1 className="mt-3 font-display text-4xl uppercase text-white md:text-5xl">Office</h1>
@@ -36,7 +34,6 @@ export default function OfficeAdminDashboard({
           <UserManagementPanel initialStaff={initialStaff} />
         </div>
       </main>
-      <BottomNav role="office_admin" />
-    </div>
+    </AppShell>
   );
 }

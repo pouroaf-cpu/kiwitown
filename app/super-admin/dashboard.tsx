@@ -2,8 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
-import TopNav from "@/components/TopNav";
-import BottomNav from "@/components/BottomNav";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import DailyCheckSection, { type DailyData } from "@/components/DailyCheckSection";
 import UserManagementPanel from "@/components/UserManagementPanel";
@@ -41,8 +40,7 @@ export default function SuperAdminDashboard({ viewer, initialSettings, initialSt
   }
 
   return (
-    <div className="industrial-grid min-h-screen pb-24 md:pb-10">
-      <TopNav role="super_admin" userName={viewer.name || "System owner"} onSignOut={signOut} />
+    <AppShell role="super_admin" userName={viewer.name || "System owner"} onSignOut={signOut}>
       <main className="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-12">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Platform administration</p>
         <div className="mt-3 flex flex-col justify-between gap-6 md:flex-row md:items-end">
@@ -77,15 +75,18 @@ export default function SuperAdminDashboard({ viewer, initialSettings, initialSt
                   <option value="">Pending</option>
                   <option value="super_admin">Super admin</option>
                   <option value="coo">COO</option>
+                  <option value="office_admin">Office admin</option>
                   <option value="foreman">Foreman</option>
                   <option value="sparky">Sparky</option>
                 </select>
+                {member.role && member.role !== "super_admin" && (
+                  <Link href={`/super-admin/view/${member.id}`} className="secondary-button !w-auto text-brand">View</Link>
+                )}
               </div>
             ))}
           </section>
         </div>
       </main>
-      <BottomNav role="super_admin" />
-    </div>
+    </AppShell>
   );
 }
