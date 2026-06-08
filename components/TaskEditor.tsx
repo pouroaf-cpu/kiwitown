@@ -134,8 +134,10 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
                         <div
                           key={id}
                           ref={(el) => { if (el) rowRefs.current.set(id, el); else rowRefs.current.delete(id); }}
-                          className={`flex select-none items-center gap-3 border-b border-border px-2 py-3 transition-shadow ${
-                            active ? "relative z-10 scale-[1.01] bg-surface shadow-xl ring-1 ring-brand" : "bg-transparent"
+                          className={`flex select-none items-center gap-3 border-b border-border px-2 py-3 transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform ${
+                            active
+                              ? "relative z-20 scale-[1.04] rounded-xl border-transparent bg-surface shadow-2xl shadow-black/50 ring-2 ring-brand"
+                              : "scale-100 bg-transparent"
                           }`}
                         >
                           <button
