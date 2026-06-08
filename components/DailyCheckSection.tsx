@@ -7,6 +7,7 @@ import {
   checkFieldsFor,
   type Cadence,
 } from "@/lib/dailyChecks";
+import { createClient } from "@/lib/supabase/client";
 import type { CheckInputType, CheckItem, DailyCheckWithProfile, DailyValue, UserRole } from "@/lib/types";
 
 interface RosterPerson { id: string; name: string; email: string; role: UserRole }
@@ -78,6 +79,8 @@ export default function DailyCheckSection({
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const supabase = useMemo(() => createClient(), []);
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const fields = useMemo(() => fieldsFor(data?.items, role, cadence), [data, role, cadence]);
 
@@ -153,6 +156,23 @@ export default function DailyCheckSection({
     }
   }
 
+  async function uploadPhoto(key: string, file: File) {
+    if (preview) return;
+    setUploading(key);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `${data?.profileId ?? "anon"}/${cadence}/${key}.${ext}`;
+      const { error } = await supabase.storage.from("check-photos").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data: pub } = supabase.storage.from("check-photos").getPublicUrl(path);
+      setValues((v) => ({ ...v, [key]: pub.publicUrl }));
+    } catch {
+      setNotice("Photo upload failed.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   const dateLabel = data?.date ?? "";
   const mode = cadence === "daily" ? rollupModeFor(role) : "none";
   const periodLabel = cadence === "daily" ? "Today" : cadence === "weekly" ? "This week" : "This month";
@@ -212,7 +232,27 @@ export default function DailyCheckSection({
                           onChange={(e) => setValues((v) => ({ ...v, [f.key]: Math.max(0, Number(e.target.value) || 0) }))}
                         />
                       ) : f.input === "photo" ? (
-                        <span className="text-xs text-muted">photo (soon)</span>
+                        <div className="flex items-center gap-2">
+                          {typeof values[f.key] === "string" && values[f.key] ? (
+                            <a href={String(values[f.key])} target="_blank" rel="noreferrer">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={String(values[f.key])} alt="check" className="h-10 w-10 rounded-lg object-cover" />
+                            </a>
+                          ) : null}
+                          <label className="cursor-pointer rounded-lg border border-border bg-bg px-3 py-1.5 text-xs font-semibold text-white">
+                            {uploading === f.key ? "Uploading…" : values[f.key] ? "Change" : "Add photo"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="environment"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) uploadPhoto(f.key, file);
+                              }}
+                            />
+                          </label>
+                        </div>
                       ) : (
                         <input
                           type={f.input === "date" ? "date" : f.input === "time" ? "time" : "text"}

@@ -11,7 +11,7 @@ const INPUT_TYPES: { value: CheckInputType; label: string }[] = [
   { value: "date", label: "Date" },
   { value: "time", label: "Time" },
   { value: "text", label: "Text" },
-  { value: "photo", label: "Photo (coming soon)" },
+  { value: "photo", label: "Photo" },
 ];
 const CADENCES = ["daily", "weekly", "monthly"] as const;
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
