@@ -13,6 +13,8 @@ export interface Profile {
   active: boolean;
   archived: boolean;
   created_at: string;
+  nickname?: string | null;
+  avatar_url?: string | null;
 }
 
 export interface WeeklySubmission {

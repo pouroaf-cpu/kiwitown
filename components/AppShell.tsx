@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NotificationPrompt from "@/components/NotificationPrompt";
+import ProfileEditor from "@/components/ProfileEditor";
 import type { UserRole } from "@/lib/types";
+
+type Me = { id: string; name: string; nickname: string | null; avatar_url: string | null; phone: string; email: string; role: UserRole | null };
 
 type NavItem = { href: string; label: string };
 
@@ -79,6 +82,8 @@ export default function AppShell({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [me, setMe] = useState<Me | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const items = NAV_BY_ROLE[role];
 
   // Fade the corner logo out as the page scrolls down.
@@ -89,12 +94,47 @@ export default function AppShell({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // The signed-in user's own avatar / display name for the sidebar.
+  useEffect(() => {
+    let active = true;
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d) setMe(d); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Lock the page behind the mobile drawer while it's open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  const displayName = me?.nickname || me?.name || userName;
+  const avatarInitial = (me?.nickname || me?.name || userName || "?").trim().slice(0, 1).toUpperCase();
+
   const NavBody = (
     <div className="flex h-full flex-col gap-1 p-4">
-      <div className="mb-4 px-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-brand">Menu</p>
-        <p className="mt-1 truncate text-sm font-medium text-white">{userName}</p>
-      </div>
+      <button
+        type="button"
+        onClick={() => { setOpen(false); setProfileOpen(true); }}
+        className="mb-4 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/5"
+      >
+        <span className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/15 bg-white/10">
+          {me?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={me.avatar_url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center text-sm font-semibold text-white">{avatarInitial}</span>
+          )}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-white">{displayName}</span>
+          <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">Edit profile</span>
+        </span>
+      </button>
       {items.map((item) => {
         const active = pathname === item.href;
         return (
@@ -146,8 +186,8 @@ export default function AppShell({
         </span>
       </button>
       <div
-        className={`fixed right-5 top-4 z-50 transition-opacity duration-500 ${
-          scrolled ? "pointer-events-none opacity-0" : "opacity-100"
+        className={`fixed right-5 top-4 z-[70] transition-opacity duration-500 ${
+          open ? "opacity-100" : scrolled ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
         <GlassLogo />
@@ -177,6 +217,8 @@ export default function AppShell({
       <div className="md:pl-64">
         <div className="pt-20 md:pt-16">{children}</div>
       </div>
+
+      {profileOpen && <ProfileEditor initial={me ?? undefined} onClose={() => setProfileOpen(false)} onSaved={() => window.location.reload()} />}
     </div>
   );
 }

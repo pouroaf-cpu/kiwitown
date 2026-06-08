@@ -1,38 +1,30 @@
 export const preferredRegion = "syd1";
 
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getViewer, hasRole } from "@/lib/authorization";
-import SuperAdminDashboard, { SuperAdminPanelsSkeleton } from "@/app/super-admin/dashboard";
-import SuperAdminView from "@/app/super-admin/SuperAdminView";
-import SettingsLite from "@/components/SettingsLite";
-import type { Profile } from "@/lib/types";
+import SettingsHub from "@/components/SettingsHub";
+import type { Profile, SystemSettings } from "@/lib/types";
 
-// super_admin: full settings (brand + users + all daily results).
-// coo / office_admin: user settings (create + manage logins).
+// Settings as a menu of sections (Profile / Create login / Role control /
+// White label), each opening a full-screen sheet in the Task Editor format.
 export default async function SettingsPage() {
   const { supabase, user, profile } = await getViewer();
   if (!user) redirect("/login");
   if (!hasRole(profile, ["super_admin", "coo", "office_admin"])) redirect("/pending");
-  if (profile!.role === "super_admin") {
-    // Static frame (AppShell + header) paints immediately; the data panels
-    // stream in via Suspense instead of blocking the whole response on the
-    // Supabase queries (the root cause of the slow TTFB-bound LCP here).
-    return (
-      <SuperAdminDashboard viewer={profile!}>
-        <Suspense fallback={<SuperAdminPanelsSkeleton />}>
-          <SuperAdminView supabase={supabase} />
-        </Suspense>
-      </SuperAdminDashboard>
-    );
-  }
 
-  const { data: staff } = await supabase.from("profiles").select("*").eq("archived", false).order("name");
+  const isSuper = profile!.role === "super_admin";
+  const [{ data: staff }, settingsRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("archived", false).order("name"),
+    isSuper
+      ? supabase.from("system_settings").select("*").eq("archived", false).limit(1).single()
+      : Promise.resolve({ data: null }),
+  ]);
+
   return (
-    <SettingsLite
-      role={profile!.role!}
-      userName={profile!.name || profile!.phone || "Settings"}
+    <SettingsHub
+      viewer={profile!}
       initialStaff={(staff ?? []) as Profile[]}
+      initialSettings={(settingsRes.data ?? null) as SystemSettings | null}
     />
   );
 }
