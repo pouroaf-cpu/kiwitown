@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NotificationPrompt from "@/components/NotificationPrompt";
 import type { UserRole } from "@/lib/types";
 
 type NavItem = { href: string; label: string };
@@ -109,15 +110,18 @@ export default function AppShell({
           </Link>
         );
       })}
-      <button
-        onClick={() => {
-          setOpen(false);
-          onSignOut();
-        }}
-        className="mt-auto rounded-xl border border-white/10 px-3 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-white/5 hover:text-white"
-      >
-        Sign out
-      </button>
+      <div className="mt-auto flex flex-col gap-2 pt-2">
+        <NotificationPrompt label="Enable alerts" enabledLabel="Alerts on" />
+        <button
+          onClick={() => {
+            setOpen(false);
+            onSignOut();
+          }}
+          className="rounded-xl border border-white/10 px-3 py-2.5 text-left text-sm font-medium text-text-secondary transition hover:bg-white/5 hover:text-white"
+        >
+          Sign out
+        </button>
+      </div>
     </div>
   );
 

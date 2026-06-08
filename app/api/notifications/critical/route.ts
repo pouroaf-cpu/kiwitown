@@ -1,9 +1,8 @@
 export const preferredRegion = "syd1";
 
 import { NextResponse } from "next/server";
+import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendSms, smsConfigured } from "@/lib/sms";
-import { toE164NZ } from "@/lib/phone";
 import type { CheckInputType, DailyValue } from "@/lib/types";
 
 function answered(input: CheckInputType, v: DailyValue | undefined): boolean {
@@ -12,18 +11,25 @@ function answered(input: CheckInputType, v: DailyValue | undefined): boolean {
   return typeof v === "string" && v !== "";
 }
 
-// Cron: text the alert role (COO / Ops) when a critical DAILY check is past its
-// due time and someone in the owning role hasn't done it. One text per check
-// per day (deduped via check_alerts). Vercel injects the CRON_SECRET bearer.
+// Cron: push-notify the alert role (COO / Ops) when a critical DAILY check is
+// past its due time and someone in the owning role hasn't done it. One alert per
+// check per day (deduped via check_alerts). Vercel injects the CRON_SECRET.
 async function run(request: Request) {
   if (!process.env.CRON_SECRET || request.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT;
+  if (!vapidPublic || !vapidPrivate || !subject)
+    return NextResponse.json({ error: "VAPID environment is incomplete" }, { status: 500 });
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
     return NextResponse.json({ disabled: "SUPABASE_SERVICE_ROLE_KEY not configured" });
+  webpush.setVapidDetails(subject, vapidPublic, vapidPrivate);
 
   const admin = createAdminClient();
   const now = new Date();
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland" }).format(now); // yyyy-mm-dd
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Pacific/Auckland" }).format(now);
   const hm = new Intl.DateTimeFormat("en-GB", { timeZone: "Pacific/Auckland", hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
   const nowMin = Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 
@@ -54,21 +60,32 @@ async function run(request: Request) {
     if (!overdue.length) continue;
 
     const names = overdue.map((p) => p.name || "someone").join(", ");
-    const body = `Kiwitown alert: "${it.label}" not done by ${String(it.due_time).slice(0, 5)} — ${names}.`;
-    const { data: recipients } = await admin.from("profiles").select("phone").eq("role", it.alert_role || "coo").eq("active", true).eq("archived", false);
+    const payload = JSON.stringify({
+      title: "Critical check overdue",
+      body: `"${it.label}" not done by ${String(it.due_time).slice(0, 5)} — ${names}.`,
+      url: "/",
+    });
 
-    let sent = 0;
-    if (smsConfigured()) {
-      for (const r of recipients ?? []) {
-        if (!r.phone) continue;
-        try { await sendSms(toE164NZ(r.phone), body); sent++; } catch { /* keep going */ }
+    // recipients = people in the alert role with an active push subscription
+    const { data: recipients } = await admin.from("profiles").select("user_id").eq("role", it.alert_role || "coo").eq("active", true).eq("archived", false);
+    const userIds = (recipients ?? []).map((r) => r.user_id).filter(Boolean);
+    let pushed = 0;
+    if (userIds.length) {
+      const { data: pushSubs } = await admin.from("push_subscriptions").select("subscription").in("user_id", userIds).eq("active", true).eq("archived", false);
+      for (const s of pushSubs ?? []) {
+        try {
+          await webpush.sendNotification(s.subscription as Parameters<typeof webpush.sendNotification>[0], payload);
+          pushed++;
+        } catch {
+          /* expired/invalid subscription — skip */
+        }
       }
     }
     await admin.from("check_alerts").insert({ check_item_id: it.id, period_date: today });
-    alerts.push(`${it.label}: ${overdue.length} overdue, ${sent} texted`);
+    alerts.push(`${it.label}: ${overdue.length} overdue, ${pushed} pushed`);
   }
 
-  return NextResponse.json({ ran: today, time: hm, alerts, smsConfigured: smsConfigured() });
+  return NextResponse.json({ ran: today, time: hm, alerts });
 }
 
 export const GET = run;

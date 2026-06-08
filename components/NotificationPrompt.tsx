@@ -8,7 +8,10 @@ function keyToBytes(key: string) {
   return Uint8Array.from(window.atob(base64), (character) => character.charCodeAt(0));
 }
 
-export default function NotificationPrompt() {
+export default function NotificationPrompt({
+  label = "Enable KPI push alerts",
+  enabledLabel = "Daily updates enabled",
+}: { label?: string; enabledLabel?: string } = {}) {
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const [state, setState] = useState<"idle" | "saving" | "enabled" | "error">("idle");
   if (!key || typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) return null;
@@ -31,7 +34,7 @@ export default function NotificationPrompt() {
 
   return (
     <button className="secondary-button mt-4 !py-2.5 text-xs" onClick={enable} disabled={state === "saving" || state === "enabled"}>
-      {state === "enabled" ? "Daily updates enabled" : state === "saving" ? "Enabling..." : state === "error" ? "Retry push alerts" : "Enable KPI push alerts"}
+      {state === "enabled" ? enabledLabel : state === "saving" ? "Enabling..." : state === "error" ? "Retry" : label}
     </button>
   );
 }
