@@ -26,6 +26,8 @@ function clean(body: ItemInput): Record<string, unknown> {
   out.critical = body.critical === true;
   out.alert_role = body.alert_role && ALERT_ROLES.includes(body.alert_role) ? body.alert_role : null;
   out.show_on_dashboard = body.show_on_dashboard === true;
+  out.description = typeof body.description === "string" && body.description.trim() ? body.description.trim().slice(0, 2000) : null;
+  out.draft = body.draft === true;
   if (body.order_index != null) out.order_index = Number(body.order_index) || 0;
   return out;
 }
@@ -60,8 +62,21 @@ export async function POST(request: Request) {
   const { supabase, error } = await manager();
   if (error) return error;
   const fields = clean((await request.json().catch(() => ({}))) as ItemInput);
-  if (!fields.role || !fields.cadence || !fields.label)
-    return NextResponse.json({ error: "Role, cadence and label are required." }, { status: 400 });
+  if (!fields.role || !fields.label)
+    return NextResponse.json({ error: "Role and a name are required." }, { status: 400 });
+  if (fields.order_index == null) {
+    const { data: last } = await supabase!
+      .from("check_items")
+      .select("order_index")
+      .eq("role", fields.role as string)
+      .eq("cadence", (fields.cadence as string) ?? "daily")
+      .eq("active", true)
+      .eq("archived", false)
+      .order("order_index", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    fields.order_index = ((last?.order_index as number) ?? 0) + 10;
+  }
   const { data, error: e } = await supabase!.from("check_items").insert(fields).select().single();
   return e ? NextResponse.json({ error: e.message }, { status: 500 }) : NextResponse.json(data);
 }
@@ -81,6 +96,19 @@ export async function PATCH(request: Request) {
   if (aErr) return NextResponse.json({ error: aErr.message }, { status: 500 });
   const { data, error: e } = await supabase!.from("check_items").insert(merged).select().single();
   return e ? NextResponse.json({ error: e.message }, { status: 500 }) : NextResponse.json(data);
+}
+
+// Reorder only — update order_index in place (order isn't history, so no versioning).
+export async function PUT(request: Request) {
+  const { supabase, error } = await manager();
+  if (error) return error;
+  const body = (await request.json().catch(() => ({}))) as { order?: { id: string; order_index: number }[] };
+  const order = Array.isArray(body.order) ? body.order : [];
+  for (const o of order) {
+    if (!o?.id) continue;
+    await supabase!.from("check_items").update({ order_index: Number(o.order_index) || 0 }).eq("id", o.id);
+  }
+  return NextResponse.json({ ok: true });
 }
 
 export async function DELETE(request: Request) {

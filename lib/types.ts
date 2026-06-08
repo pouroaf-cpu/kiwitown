@@ -106,6 +106,8 @@ export interface CheckItem {
   role: Exclude<UserRole, "super_admin">;
   cadence: "daily" | "weekly" | "monthly";
   label: string;
+  description: string | null;
+  draft: boolean;
   input_type: CheckInputType;
   target: number | null;
   unit: string | null;

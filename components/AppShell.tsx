@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { UserRole } from "@/lib/types";
@@ -57,12 +57,9 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
 
 function GlassLogo() {
   return (
-    <Link
-      href="/"
-      className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 shadow-lg backdrop-blur-2xl"
-    >
+    <Link href="/" className="pointer-events-auto flex items-center gap-2">
       <span className="brand-mark">KE</span>
-      <span className="font-display text-sm uppercase tracking-wide text-white">Kiwitown</span>
+      <span className="font-display text-sm uppercase tracking-wide text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">Kiwitown</span>
     </Link>
   );
 }
@@ -80,7 +77,16 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const items = NAV_BY_ROLE[role];
+
+  // Fade the corner logo out as the page scrolls down.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const NavBody = (
     <div className="flex h-full flex-col gap-1 p-4">
@@ -135,7 +141,11 @@ export default function AppShell({
           <span className="block h-0.5 w-5 rounded-full bg-white" />
         </span>
       </button>
-      <div className="fixed right-5 top-4 z-50">
+      <div
+        className={`fixed right-5 top-4 z-50 transition-opacity duration-500 ${
+          scrolled ? "pointer-events-none opacity-0" : "opacity-100"
+        }`}
+      >
         <GlassLogo />
       </div>
 

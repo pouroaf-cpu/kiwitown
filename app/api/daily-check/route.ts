@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     .select("id, input_type")
     .eq("active", true)
     .eq("archived", false)
+    .eq("draft", false)
     .eq("role", profile.role)
     .eq("cadence", cadence);
 
@@ -91,6 +92,7 @@ export async function GET(request: Request) {
       .select("*")
       .eq("active", true)
       .eq("archived", false)
+      .eq("draft", false)
       .eq("cadence", cadence)
       .order("role")
       .order("order_index"),
