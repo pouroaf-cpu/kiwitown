@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
+import KpiDashboard from "@/components/KpiDashboard";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, UserRole } from "@/lib/types";
 
@@ -30,6 +31,9 @@ export default function OfficeAdminFrame({ viewer, navRole, children }: { viewer
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Office admin</p>
         <h1 className="mt-3 font-display text-4xl uppercase text-white md:text-5xl">Office</h1>
         <p className="mt-2 text-text-secondary">{viewer.name || viewer.phone} | daily check &amp; user settings</p>
+        <div className="mt-8">
+          <KpiDashboard role="office_admin" />
+        </div>
         {children}
       </main>
     </AppShell>

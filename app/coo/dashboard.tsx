@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
+import KpiDashboard from "@/components/KpiDashboard";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, UserRole } from "@/lib/types";
 
@@ -41,6 +42,9 @@ export default function CooFrame({ viewer, month, year, navRole, children }: { v
           </div>
         </div>
       </header>
+      <div className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
+        <KpiDashboard role="coo" />
+      </div>
       {children}
     </AppShell>
   );

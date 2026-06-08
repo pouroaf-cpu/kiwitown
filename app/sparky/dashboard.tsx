@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/AppShell";
+import KpiDashboard from "@/components/KpiDashboard";
 
 // Shown while the data content streams in.
 export function SparkySkeleton() {
@@ -25,6 +26,9 @@ export default function SparkyFrame({ sparkyName, children }: { sparkyName: stri
 
   return (
     <AppShell role="sparky" userName={sparkyName} onSignOut={signOut}>
+      <div className="px-4 pt-6 md:mx-auto md:max-w-5xl md:px-8">
+        <KpiDashboard role="sparky" />
+      </div>
       {children}
     </AppShell>
   );

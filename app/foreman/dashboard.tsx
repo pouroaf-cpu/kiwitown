@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import AppShell from "@/components/AppShell";
+import KpiDashboard from "@/components/KpiDashboard";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types";
 
@@ -31,6 +32,9 @@ export default function ForemanFrame({ foremanName, weekNum, year, navRole, chil
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Week {weekNum} | {year}</p>
           <h1 className="mt-3 font-display text-5xl uppercase text-white">Weekly Check</h1>
           <p className="mt-2 text-text-secondary">{foremanName} | foreman submission</p>
+        </div>
+        <div className="mt-8">
+          <KpiDashboard role="foreman" />
         </div>
         {children}
       </main>
