@@ -13,23 +13,29 @@ type Section = "profile" | "create" | "roles" | "whitelabel";
 const ROLE_OPTIONS: (UserRole | "")[] = ["", "super_admin", "coo", "office_admin", "foreman", "sparky"];
 
 // Settings as a menu of sections. Each opens a full-screen sheet in the same
-// format as the Task Editor. Sections shown depend on role.
-export default function SettingsHub({
-  viewer,
-  initialStaff,
-  initialSettings,
-}: {
-  viewer: Profile;
-  initialStaff: Profile[];
-  initialSettings: SystemSettings | null;
-}) {
+// format as the Task Editor. Sections shown depend on role. The menu needs no
+// data; each sheet lazy-loads its own data on open, so /settings stays off the
+// DB critical path and renders instantly.
+export default function SettingsHub({ viewer }: { viewer: Profile }) {
   const supabase = useMemo(() => createClient(), []);
   const [open, setOpen] = useState<Section | null>(null);
-  const [staff, setStaff] = useState(initialStaff);
-  const [settings, setSettings] = useState(initialSettings);
+  const [staff, setStaff] = useState<Profile[] | null>(null);
+  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [notice, setNotice] = useState("");
   const [savingBrand, setSavingBrand] = useState(false);
   const isSuper = viewer.role === "super_admin";
+
+  async function openSection(id: Section) {
+    setOpen(id);
+    if (id === "roles" && !staff) {
+      const { data } = await supabase.from("profiles").select("*").eq("archived", false).order("name");
+      setStaff((data ?? []) as Profile[]);
+    }
+    if (id === "whitelabel" && !settings) {
+      const { data } = await supabase.from("system_settings").select("*").eq("archived", false).limit(1).single();
+      setSettings((data ?? null) as SystemSettings | null);
+    }
+  }
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -40,7 +46,7 @@ export default function SettingsHub({
     const res = await fetch("/api/users", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile_id: profileId, role: role || null }) });
     const result = await res.json();
     if (!res.ok) return setNotice(result.error || "Could not update role.");
-    setStaff((cur) => cur.map((m) => (m.id === profileId ? result : m)));
+    setStaff((cur) => (cur ? cur.map((m) => (m.id === profileId ? result : m)) : cur));
     setNotice("Access role changed and audit logged.");
   }
 
@@ -88,7 +94,7 @@ export default function SettingsHub({
             <button
               key={s.id}
               type="button"
-              onClick={() => setOpen(s.id)}
+              onClick={() => openSection(s.id)}
               className="flex w-full items-center gap-4 border-b border-border px-4 py-4 text-left transition last:border-0 hover:bg-white/5"
             >
               <span className="text-xl" aria-hidden>{s.icon}</span>
@@ -120,38 +126,47 @@ export default function SettingsHub({
 
       {open === "create" && (
         <SettingsSheet title="Create user login" onClose={() => setOpen(null)}>
-          <UserManagementPanel initialStaff={staff} showList={false} canAssignSuperAdmin={isSuper} />
+          <UserManagementPanel initialStaff={staff ?? []} showList={false} canAssignSuperAdmin={isSuper} />
         </SettingsSheet>
       )}
 
       {open === "roles" && (
         <SettingsSheet title="Role control" onClose={() => setOpen(null)}>
-          <p className="text-sm text-text-secondary">Assign each person&apos;s role. Changes are audit-logged.</p>
-          <div className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
-            {staff.map((member) => (
-              <div key={member.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">{member.nickname || member.name || "Pending profile"}</p>
-                  <p className="text-xs text-text-secondary">{member.email || member.phone || "No contact recorded"}</p>
-                </div>
-                <select
-                  className="field !w-auto min-w-44"
-                  value={member.role || ""}
-                  onChange={(e) => setRole(member.id, e.target.value)}
-                  disabled={member.id === viewer.id}
-                >
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r || "none"} value={r}>{r ? ROLE_LABELS[r as UserRole] : "Pending"}</option>
-                  ))}
-                </select>
+          {!staff ? (
+            <p className="text-sm text-text-secondary">Loading…</p>
+          ) : (
+            <>
+              <p className="text-sm text-text-secondary">Assign each person&apos;s role. Changes are audit-logged.</p>
+              <div className="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border">
+                {staff.map((member) => (
+                  <div key={member.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">{member.nickname || member.name || "Pending profile"}</p>
+                      <p className="text-xs text-text-secondary">{member.email || member.phone || "No contact recorded"}</p>
+                    </div>
+                    <select
+                      className="field !w-auto min-w-44"
+                      value={member.role || ""}
+                      onChange={(e) => setRole(member.id, e.target.value)}
+                      disabled={member.id === viewer.id}
+                    >
+                      {ROLE_OPTIONS.map((r) => (
+                        <option key={r || "none"} value={r}>{r ? ROLE_LABELS[r as UserRole] : "Pending"}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </SettingsSheet>
       )}
 
-      {open === "whitelabel" && settings && (
-        <SettingsSheet title="White label" onClose={() => setOpen(null)} onSave={() => (document.getElementById("white-label-form") as HTMLFormElement | null)?.requestSubmit()} saving={savingBrand}>
+      {open === "whitelabel" && (
+        <SettingsSheet title="White label" onClose={() => setOpen(null)} onSave={settings ? () => (document.getElementById("white-label-form") as HTMLFormElement | null)?.requestSubmit() : undefined} saving={savingBrand}>
+          {!settings ? (
+            <p className="text-sm text-text-secondary">Loading…</p>
+          ) : (
           <form id="white-label-form" onSubmit={saveBrand} className="space-y-5">
             <label className="block text-xs uppercase tracking-widest text-text-secondary">
               Business name
@@ -171,6 +186,7 @@ export default function SettingsHub({
             </label>
             <button type="submit" className="primary-button w-full" disabled={savingBrand}>{savingBrand ? "Saving…" : "Save configuration"}</button>
           </form>
+          )}
         </SettingsSheet>
       )}
     </AppShell>
