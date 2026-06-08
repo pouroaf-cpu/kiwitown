@@ -52,6 +52,7 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
   }
 
   function onDragStart(e: React.PointerEvent, cadence: string, id: string) {
+    e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setDrag({ cadence, ids: orderedIds(cadence), activeId: id });
   }
@@ -133,21 +134,27 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
                         <div
                           key={id}
                           ref={(el) => { if (el) rowRefs.current.set(id, el); else rowRefs.current.delete(id); }}
-                          className={`flex items-center gap-3 border-b border-border px-2 py-3 transition-shadow ${
+                          className={`flex select-none items-center gap-3 border-b border-border px-2 py-3 transition-shadow ${
                             active ? "relative z-10 scale-[1.01] bg-surface shadow-xl ring-1 ring-brand" : "bg-transparent"
                           }`}
                         >
                           <button
                             type="button"
                             aria-label="Drag to reorder"
+                            draggable={false}
                             onPointerDown={(e) => onDragStart(e, c, id)}
                             onPointerMove={onDragMove}
                             onPointerUp={onDragEnd}
                             onPointerCancel={onDragEnd}
-                            style={{ touchAction: "none" }}
-                            className="cursor-grab touch-none select-none px-1 text-lg leading-none text-text-secondary active:cursor-grabbing"
+                            onContextMenu={(e) => e.preventDefault()}
+                            style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+                            className="cursor-grab select-none px-1.5 text-text-secondary active:cursor-grabbing"
                           >
-                            ⠿
+                            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden="true">
+                              <circle cx="4" cy="4" r="1.5" /><circle cx="10" cy="4" r="1.5" />
+                              <circle cx="4" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" />
+                              <circle cx="4" cy="16" r="1.5" /><circle cx="10" cy="16" r="1.5" />
+                            </svg>
                           </button>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-white">
