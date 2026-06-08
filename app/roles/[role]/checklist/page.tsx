@@ -41,8 +41,21 @@ export default async function RoleChecklistPage({ params }: { params: Promise<{ 
     .order("created_at")
     .limit(1)
     .maybeSingle();
-  if (!data) redirect("/");
-  const target = data as Profile;
+  // No real account of this role yet: render the checklist with an empty
+  // placeholder profile (all-zero id matches no rows) instead of bouncing.
+  const target: Profile = (data as Profile | null) ?? {
+    id: "00000000-0000-0000-0000-000000000000",
+    user_id: "",
+    name: `No ${ROLE_LABELS[r]} account yet`,
+    email: "",
+    phone: "",
+    role: r,
+    salary: 0,
+    bonus_pct: 0,
+    active: true,
+    archived: false,
+    created_at: new Date().toISOString(),
+  };
 
   const { data: check } = await admin
     .from("daily_checks")
