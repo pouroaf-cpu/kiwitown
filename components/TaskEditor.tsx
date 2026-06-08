@@ -125,7 +125,7 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
               return (
                 <section key={c}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary">{CADENCE_LABELS[c]}</p>
-                  <div className="mt-3 overflow-hidden rounded-2xl border border-border">
+                  <div className="mt-3 divide-y divide-border rounded-2xl border border-border">
                     {ids.map((id) => {
                       const it = byId.get(id);
                       if (!it) return null;
@@ -134,9 +134,9 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
                         <div
                           key={id}
                           ref={(el) => { if (el) rowRefs.current.set(id, el); else rowRefs.current.delete(id); }}
-                          className={`flex select-none items-center gap-3 border-b border-border px-2 py-3 transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform ${
+                          className={`flex select-none items-center gap-3 px-2 py-3 transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform ${
                             active
-                              ? "relative z-20 scale-[1.04] rounded-xl border-transparent bg-surface shadow-2xl shadow-black/50 ring-2 ring-brand"
+                              ? "relative z-20 scale-[1.05] rounded-xl bg-surface shadow-2xl shadow-black/50 ring-2 ring-brand"
                               : "scale-100 bg-transparent"
                           }`}
                         >
