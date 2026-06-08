@@ -80,7 +80,7 @@ export interface SystemSettings {
   default_bonus_pct: number;
 }
 
-export type DailyValue = number | boolean;
+export type DailyValue = number | boolean | string;
 
 export interface DailyCheck {
   id: string;
@@ -96,4 +96,25 @@ export interface DailyCheck {
 // daily_checks row joined with the submitter's profile (for manager rollups).
 export interface DailyCheckWithProfile extends DailyCheck {
   profile: { name: string; email: string; role: UserRole } | null;
+}
+
+export type CheckInputType = "yes_no" | "number" | "currency" | "date" | "time" | "text" | "photo";
+
+// Admin-editable check definition (the item id is the value key in submissions).
+export interface CheckItem {
+  id: string;
+  role: Exclude<UserRole, "super_admin">;
+  cadence: "daily" | "weekly" | "monthly";
+  label: string;
+  input_type: CheckInputType;
+  target: number | null;
+  unit: string | null;
+  due_day: number | null;
+  due_time: string | null;
+  critical: boolean;
+  alert_role: "coo" | "foreman" | null;
+  show_on_dashboard: boolean;
+  order_index: number;
+  active: boolean;
+  archived: boolean;
 }

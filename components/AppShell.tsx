@@ -22,7 +22,11 @@ const ALL_ACCESS: NavItem[] = [
 ];
 
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
-  super_admin: [{ href: "/settings", label: "Settings" }, ...ALL_ACCESS],
+  super_admin: [
+    { href: "/settings", label: "Settings" },
+    { href: "/task-editor", label: "Task editor" },
+    ...ALL_ACCESS,
+  ],
   coo: [
     { href: "/coo", label: "My Dashboard" },
     { href: "/coo/checklist", label: "My Checklist" },
@@ -32,11 +36,13 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: "/roles/office-admin/checklist", label: "Office · Checklist" },
     { href: "/roles/sparky", label: "Sparky · Dashboard" },
     { href: "/roles/sparky/checklist", label: "Sparky · Checklist" },
+    { href: "/task-editor", label: "Task editor" },
     { href: "/settings", label: "Settings" },
   ],
   office_admin: [
     { href: "/office-admin", label: "Dashboard" },
     { href: "/office-admin/checklist", label: "Checklist" },
+    { href: "/task-editor", label: "Task editor" },
     { href: "/settings", label: "Settings" },
   ],
   foreman: [

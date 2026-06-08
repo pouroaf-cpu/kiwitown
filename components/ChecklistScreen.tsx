@@ -1,18 +1,31 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AppShell from "@/components/AppShell";
 import DailyCheckSection from "@/components/DailyCheckSection";
-import { CADENCE_LABELS, ROLE_LABELS, cadencesFor, type Cadence } from "@/lib/dailyChecks";
+import { CADENCES, CADENCE_LABELS, ROLE_LABELS, cadencesFor, type Cadence } from "@/lib/dailyChecks";
 import type { UserRole } from "@/lib/types";
 
-// A role's checklist page — Daily / Weekly / Monthly tabs for the cadences that
-// role actually has items for.
+// A role's checklist — Daily / Weekly / Monthly tabs for the cadences that role
+// has items for (read live from check_items, with the code config as fallback).
 export default function ChecklistScreen({ role, userName }: { role: UserRole; userName: string }) {
   const supabase = useMemo(() => createClient(), []);
-  const cadences = useMemo(() => cadencesFor(role), [role]);
-  const [cadence, setCadence] = useState<Cadence>(cadences[0] ?? "daily");
+  const [cadences, setCadences] = useState<Cadence[]>(cadencesFor(role));
+  const [cadence, setCadence] = useState<Cadence>(cadencesFor(role)[0] ?? "daily");
+
+  useEffect(() => {
+    fetch(`/api/check-items?role=${role}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d.items ?? []) as { cadence: Cadence }[];
+        const cs = CADENCES.filter((c) => items.some((i) => i.cadence === c));
+        const list = cs.length ? cs : cadencesFor(role);
+        setCadences(list);
+        setCadence((prev) => (list.includes(prev) ? prev : list[0] ?? "daily"));
+      })
+      .catch(() => {});
+  }, [role]);
 
   async function signOut() {
     await supabase.auth.signOut();

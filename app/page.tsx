@@ -3,8 +3,7 @@ export const preferredRegion = "syd1";
 
 import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/authorization";
-import { businessDate, isComplete } from "@/lib/dailyChecks";
-import type { DailyCheck } from "@/lib/types";
+import { businessDate } from "@/lib/dailyChecks";
 
 const ROLE_BASE: Record<string, string> = {
   coo: "/coo",
@@ -37,5 +36,5 @@ export default async function RootPage() {
     .eq("check_date", businessDate())
     .maybeSingle();
 
-  redirect(isComplete((check ?? null) as DailyCheck | null, role) ? base : `${base}/checklist`);
+  redirect(check ? base : `${base}/checklist`);
 }
