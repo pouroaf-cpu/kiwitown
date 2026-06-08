@@ -1,4 +1,5 @@
-import ForemanDashboard from "@/app/foreman/dashboard";
+import ForemanFrame from "@/app/foreman/dashboard";
+import ForemanPanels from "@/app/foreman/panels";
 import PreviewBar from "../PreviewBar";
 import {
   CHECKLIST_ITEMS,
@@ -16,17 +17,18 @@ export default function PreviewForeman() {
   return (
     <>
       <PreviewBar role="Foreman" />
-      <ForemanDashboard
-        foremanName="Frankie Foreman"
-        weekNum={WEEK_NUM}
-        year={CURRENT_YEAR}
-        existingSubmission={null}
-        history={FOREMAN_HISTORY}
-        checklistItems={CHECKLIST_ITEMS}
-        teamEntries={KPI_ENTRIES}
-        sparkies={SPARKY_CONTACTS}
-        dailyPreview={DAILY_DATA_FOREMAN}
-      />
+      <ForemanFrame foremanName="Frankie Foreman" weekNum={WEEK_NUM} year={CURRENT_YEAR}>
+        <ForemanPanels
+          weekNum={WEEK_NUM}
+          year={CURRENT_YEAR}
+          existingSubmission={null}
+          history={FOREMAN_HISTORY}
+          checklistItems={CHECKLIST_ITEMS}
+          teamEntries={KPI_ENTRIES}
+          sparkies={SPARKY_CONTACTS}
+          dailyPreview={DAILY_DATA_FOREMAN}
+        />
+      </ForemanFrame>
     </>
   );
 }

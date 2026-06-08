@@ -1,4 +1,5 @@
-import SparkyDashboard from "@/app/sparky/dashboard";
+import SparkyFrame from "@/app/sparky/dashboard";
+import SparkyPanels from "@/app/sparky/panels";
 import PreviewBar from "../PreviewBar";
 import {
   CURRENT_MONTH,
@@ -17,17 +18,18 @@ export default function PreviewSparky() {
   return (
     <>
       <PreviewBar role="Sparky" />
-      <SparkyDashboard
-        sparkyName="Alex Wired"
-        kpiEntry={SPARKY_ENTRY}
-        entries={SPARKY_ENTRIES}
-        currentMonth={CURRENT_MONTH}
-        currentYear={CURRENT_YEAR}
-        targets={TARGETS_RECORD}
-        teamScore={TEAM_SCORE}
-        dailyPreview={DAILY_DATA_SPARKY}
-        teamPreview={TEAM_COMPLETION}
-      />
+      <SparkyFrame sparkyName="Alex Wired">
+        <SparkyPanels
+          kpiEntry={SPARKY_ENTRY}
+          entries={SPARKY_ENTRIES}
+          currentMonth={CURRENT_MONTH}
+          currentYear={CURRENT_YEAR}
+          targets={TARGETS_RECORD}
+          teamScore={TEAM_SCORE}
+          dailyPreview={DAILY_DATA_SPARKY}
+          teamPreview={TEAM_COMPLETION}
+        />
+      </SparkyFrame>
     </>
   );
 }

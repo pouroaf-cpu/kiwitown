@@ -1,22 +1,16 @@
+import { Suspense } from "react";
 import type { ServerClient } from "@/lib/supabase/server";
 import type { KpiEntry, KpiTarget, Profile } from "@/lib/types";
 import { resolveTargets } from "@/lib/kpi";
-import SparkyDashboard from "./dashboard";
+import SparkyFrame, { SparkySkeleton } from "./dashboard";
+import SparkyPanels from "./panels";
 
-export default async function SparkyView({
-  supabase,
-  profile,
-  showDailyCheck,
-}: {
-  supabase: ServerClient;
-  profile: Profile;
-  showDailyCheck?: boolean;
-}) {
+// Async data loader — current entry + 6-month history + targets + team score.
+async function SparkyData({ supabase, profile, showDailyCheck }: { supabase: ServerClient; profile: Profile; showDailyCheck?: boolean }) {
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
-  // Fetch current entry + 6-month history in parallel
   const [{ data: kpiEntry }, { data: history }, { data: targets }, { data: teamScore }] = await Promise.all([
     supabase
       .from("kpi_entries")
@@ -37,8 +31,7 @@ export default async function SparkyView({
   ]);
 
   return (
-    <SparkyDashboard
-      sparkyName={profile.name?.trim() || profile.email || profile.phone || "Sparky"}
+    <SparkyPanels
       kpiEntry={(kpiEntry ?? null) as KpiEntry | null}
       entries={(history ?? []) as KpiEntry[]}
       currentMonth={month}
@@ -47,5 +40,24 @@ export default async function SparkyView({
       teamScore={Number(teamScore ?? 0)}
       showDailyCheck={showDailyCheck}
     />
+  );
+}
+
+export default function SparkyView({
+  supabase,
+  profile,
+  showDailyCheck,
+}: {
+  supabase: ServerClient;
+  profile: Profile;
+  showDailyCheck?: boolean;
+}) {
+  const sparkyName = profile.name?.trim() || profile.email || profile.phone || "Sparky";
+  return (
+    <SparkyFrame sparkyName={sparkyName}>
+      <Suspense fallback={<SparkySkeleton />}>
+        <SparkyData supabase={supabase} profile={profile} showDailyCheck={showDailyCheck} />
+      </Suspense>
+    </SparkyFrame>
   );
 }

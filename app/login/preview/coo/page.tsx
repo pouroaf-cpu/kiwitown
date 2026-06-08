@@ -1,4 +1,5 @@
-import CooDashboard from "@/app/coo/dashboard";
+import CooFrame from "@/app/coo/dashboard";
+import CooPanels from "@/app/coo/panels";
 import PreviewBar from "../PreviewBar";
 import {
   ALL_STAFF,
@@ -18,17 +19,19 @@ export default function PreviewCoo() {
   return (
     <>
       <PreviewBar role="COO" />
-      <CooDashboard
-        viewer={COO}
-        initialStaff={ALL_STAFF}
-        initialEntries={KPI_ENTRIES}
-        initialChecklist={CHECKLIST_ITEMS}
-        initialTargets={KPI_TARGETS}
-        initialAudit={AUDIT_EVENTS}
-        month={CURRENT_MONTH}
-        year={CURRENT_YEAR}
-        dailyPreview={DAILY_DATA_COO}
-      />
+      <CooFrame viewer={COO} month={CURRENT_MONTH} year={CURRENT_YEAR}>
+        <CooPanels
+          viewer={COO}
+          initialStaff={ALL_STAFF}
+          initialEntries={KPI_ENTRIES}
+          initialChecklist={CHECKLIST_ITEMS}
+          initialTargets={KPI_TARGETS}
+          initialAudit={AUDIT_EVENTS}
+          month={CURRENT_MONTH}
+          year={CURRENT_YEAR}
+          dailyPreview={DAILY_DATA_COO}
+        />
+      </CooFrame>
     </>
   );
 }
