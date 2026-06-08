@@ -5,6 +5,7 @@ import { getViewer, hasRole } from "@/lib/authorization";
 import { createAdminClient } from "@/lib/supabase/admin";
 import ViewerShell from "@/components/ViewerShell";
 import SparkyRoster from "@/components/SparkyRoster";
+import { ROLE_LABELS } from "@/lib/dailyChecks";
 import CooView from "@/app/coo/CooView";
 import ForemanView from "@/app/foreman/ForemanView";
 import OfficeAdminView from "@/app/office-admin/OfficeAdminView";
@@ -43,8 +44,22 @@ export default async function RoleDashboardPage({ params }: { params: Promise<{ 
     .order("created_at")
     .limit(1)
     .maybeSingle();
-  if (!data) redirect("/");
-  const target = data as Profile;
+  // No real account of this role yet: render the dashboard with an empty
+  // placeholder profile instead of bouncing the admin back to "/". The all-zero
+  // id matches no rows, so the dashboard loads with an empty state.
+  const target: Profile = (data as Profile | null) ?? {
+    id: "00000000-0000-0000-0000-000000000000",
+    user_id: "",
+    name: `No ${ROLE_LABELS[r]} account yet`,
+    email: "",
+    phone: "",
+    role: r,
+    salary: 0,
+    bonus_pct: 0,
+    active: true,
+    archived: false,
+    created_at: new Date().toISOString(),
+  };
 
   if (r === "coo") return <CooView supabase={supabase} profile={target} showDailyCheck={false} navRole={navRole} />;
   if (r === "foreman") return <ForemanView supabase={supabase} profile={target} showDailyCheck={false} navRole={navRole} />;
