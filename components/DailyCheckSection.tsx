@@ -77,6 +77,8 @@ export default function DailyCheckSection({
   const [loading, setLoading] = useState(!preview);
   const [values, setValues] = useState<Record<string, DailyValue>>({});
   const [note, setNote] = useState("");
+  const [happiness, setHappiness] = useState(50);
+  const [happinessNote, setHappinessNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const supabase = useMemo(() => createClient(), []);
@@ -87,8 +89,11 @@ export default function DailyCheckSection({
   function seedFrom(d: DailyData) {
     const f = fieldsFor(d.items, role, cadence);
     const own = d.checks.find((c) => c.profile_id === d.profileId);
-    setValues({ ...blankValues(f), ...(own?.values ?? {}) });
+    const ownValues = (own?.values ?? {}) as Record<string, DailyValue>;
+    setValues({ ...blankValues(f), ...ownValues });
     setNote(own?.note ?? "");
+    setHappiness(typeof ownValues.__happiness === "number" ? ownValues.__happiness : 50);
+    setHappinessNote(typeof ownValues.__happiness_note === "string" ? ownValues.__happiness_note : "");
   }
 
   useEffect(() => {
@@ -135,7 +140,7 @@ export default function DailyCheckSection({
       const res = await fetch("/api/daily-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ values, note, cadence }),
+        body: JSON.stringify({ values, note, cadence, happiness, happinessNote }),
       });
       const saved = await res.json();
       if (!res.ok) throw new Error(saved.error || "save");
@@ -266,6 +271,34 @@ export default function DailyCheckSection({
                 )}
               </div>
 
+              <div className="mt-4 rounded-xl border border-border bg-surface p-4">
+                <p className="text-sm font-medium text-white">How happy are you right now?</p>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={happiness}
+                  onChange={(e) => setHappiness(Number(e.target.value))}
+                  className="happiness-range mt-4 w-full"
+                  aria-label="How happy are you right now?"
+                />
+                <div className="mt-1 flex justify-between text-xs font-semibold">
+                  <span className="text-sky-400">Cold</span>
+                  <span className="text-text-secondary">{happiness}</span>
+                  <span className="text-red-400">Hot</span>
+                </div>
+                <textarea
+                  className="field mt-3 min-h-16 resize-y"
+                  placeholder="Anything you want to add? (optional)"
+                  value={happinessNote}
+                  onChange={(e) => setHappinessNote(e.target.value)}
+                />
+                <p className="mt-2 text-xs italic text-text-secondary">
+                  If you&apos;re unhappy, you&apos;re free to use the{" "}
+                  <a href="/feedback" className="text-brand underline">anonymous function</a>.
+                </p>
+              </div>
+
               <textarea className="field mt-3 min-h-16 resize-y" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
               {notice && <p className="mt-3 text-sm text-brand">{notice}</p>}
               <button className="primary-button mt-3 w-full" onClick={submit} disabled={saving}>
@@ -344,6 +377,12 @@ export default function DailyCheckSection({
                           </span>
                         );
                       })}
+                      {typeof check.values.__happiness === "number" && (
+                        <span>
+                          Mood:{" "}
+                          <span className="text-white">{Number(check.values.__happiness)}%</span>
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

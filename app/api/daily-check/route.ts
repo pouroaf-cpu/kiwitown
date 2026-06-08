@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   if (!profile.role || !profile.active || profile.archived)
     return NextResponse.json({ error: "No active role" }, { status: 403 });
 
-  const body = (await request.json().catch(() => ({}))) as { values?: unknown; note?: string; cadence?: string };
+  const body = (await request.json().catch(() => ({}))) as { values?: unknown; note?: string; cadence?: string; happiness?: unknown; happinessNote?: string };
   const cadence = asCadence(body.cadence);
 
   const { data: items } = await supabase
@@ -43,6 +43,14 @@ export async function POST(request: Request) {
     .eq("cadence", cadence);
 
   const values = sanitize((items ?? []) as Pick<CheckItem, "id" | "input_type">[], body.values);
+  // Wellbeing "How happy are you right now?" — stored alongside the check under
+  // reserved keys so it surfaces in the manager rollup (no schema change).
+  if (Number.isFinite(Number(body.happiness))) {
+    values.__happiness = Math.min(100, Math.max(0, Math.round(Number(body.happiness))));
+  }
+  if (typeof body.happinessNote === "string" && body.happinessNote.trim()) {
+    values.__happiness_note = body.happinessNote.slice(0, 1000);
+  }
   const note = typeof body.note === "string" ? body.note.slice(0, 1000) : null;
 
   const { data, error } = await supabase

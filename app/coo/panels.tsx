@@ -92,19 +92,8 @@ export default function CooPanels({ viewer, initialStaff, initialEntries, initia
     setNotice("New target version is effective from the selected date.");
   }
 
-  async function closeMonth() {
-    const response = await fetch("/api/month-end", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ month, year }) });
-    const result = await response.json();
-    setNotice(response.ok ? `Month end stored. Total bonus ${money(result.summary.total_bonus)}.` : result.error);
-  }
-
   return (
     <main className="mx-auto max-w-7xl px-5 py-6 md:px-8">
-      <div className="mb-6 flex flex-wrap gap-3">
-        <a className="secondary-button !w-auto" href={`/api/reports/bonus?month=${month}&year=${year}&format=csv`}>Export CSV</a>
-        <a className="secondary-button !w-auto" href={`/api/reports/bonus?month=${month}&year=${year}&format=pdf`}>Export PDF</a>
-        <button className="primary-button !w-auto" onClick={closeMonth}>Close month</button>
-      </div>
       {notice && <div className="mb-6 rounded-xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-brand">{notice}</div>}
       {showDailyCheck && <DailyCheckSection role="coo" preview={dailyPreview} />}
       <div className="mb-7 flex gap-2 overflow-x-auto pb-2">

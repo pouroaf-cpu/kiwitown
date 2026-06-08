@@ -102,6 +102,35 @@ body {
   transform: none;
 }
 
+/* Happiness "hot/cold" meter — blue (cold) → red (hot) gradient track */
+.happiness-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #38bdf8 0%, #a3e635 50%, #ef4444 100%);
+  outline: none;
+}
+.happiness-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 22px;
+  width: 22px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+.happiness-range::-moz-range-thumb {
+  height: 22px;
+  width: 22px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 2px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
 /* Mobile tap highlight */
 * {
   -webkit-tap-highlight-color: transparent;
