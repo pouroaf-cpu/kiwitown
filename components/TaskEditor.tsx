@@ -14,7 +14,14 @@ const TYPE_LABEL: Record<CheckInputType, string> = {
   yes_no: "Yes / No", number: "Number", currency: "$ Amount", date: "Date", time: "Time", text: "Text", photo: "Photo",
 };
 
-type Drag = { cadence: string; ids: string[]; activeId: string };
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+// While dragging we keep the DOM order fixed and only move things with CSS
+// transforms: the grabbed row follows the finger (translateY = dy, no
+// transition), the rows between its start and target slide one row-height to
+// open a gap. The array only commits on drop — nothing is re-measured mid-drag,
+// so it can't "lose track".
+type Drag = { cadence: string; ids: string[]; from: number; activeId: string; dy: number; rowH: number; startY: number };
 
 export default function TaskEditor({ navRole, userName }: { navRole: UserRole; userName: string }) {
   const supabase = useMemo(() => createClient(), []);
@@ -45,51 +52,42 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
     if (res.ok) load(role);
   }
 
-  // Order of a cadence group — the live drag order while dragging, else stored.
-  function orderedIds(cadence: string): string[] {
-    if (drag && drag.cadence === cadence) return drag.ids;
+  function storedIds(cadence: string): string[] {
     return items.filter((i) => i.cadence === cadence).sort((a, b) => a.order_index - b.order_index).map((i) => i.id);
   }
 
   function onDragStart(e: React.PointerEvent, cadence: string, id: string) {
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    setDrag({ cadence, ids: orderedIds(cadence), activeId: id });
+    const ids = storedIds(cadence);
+    const rowH = rowRefs.current.get(id)?.getBoundingClientRect().height ?? 56;
+    setDrag({ cadence, ids, from: ids.indexOf(id), activeId: id, dy: 0, rowH, startY: e.clientY });
   }
 
   function onDragMove(e: React.PointerEvent) {
-    if (!drag) return;
-    const y = e.clientY;
-    const ids = drag.ids;
-    const from = ids.indexOf(drag.activeId);
-    let to = ids.length - 1;
-    for (let k = 0; k < ids.length; k++) {
-      const el = rowRefs.current.get(ids[k]);
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      if (y < r.top + r.height / 2) { to = k; break; }
-    }
-    if (to !== from) {
-      const next = [...ids];
-      next.splice(from, 1);
-      next.splice(to, 0, drag.activeId);
-      setDrag({ ...drag, ids: next });
-    }
+    setDrag((d) => (d ? { ...d, dy: e.clientY - d.startY } : d));
   }
 
   async function onDragEnd() {
-    if (!drag) return;
-    const order = drag.ids.map((id, idx) => ({ id, order_index: (idx + 1) * 10 }));
-    setItems((prev) => prev.map((it) => {
-      const o = order.find((x) => x.id === it.id);
-      return o ? { ...it, order_index: o.order_index } : it;
-    }));
+    const d = drag;
+    if (!d) return;
+    const to = clamp(d.from + Math.round(d.dy / d.rowH), 0, d.ids.length - 1);
+    const next = [...d.ids];
+    next.splice(d.from, 1);
+    next.splice(to, 0, d.activeId);
     setDrag(null);
-    await fetch("/api/check-items", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ order }),
-    });
+    if (to !== d.from) {
+      const order = next.map((id, idx) => ({ id, order_index: (idx + 1) * 10 }));
+      setItems((prev) => prev.map((it) => {
+        const o = order.find((x) => x.id === it.id);
+        return o ? { ...it, order_index: o.order_index } : it;
+      }));
+      await fetch("/api/check-items", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order }),
+      });
+    }
   }
 
   async function signOut() {
@@ -120,58 +118,76 @@ export default function TaskEditor({ navRole, userName }: { navRole: UserRole; u
         ) : (
           <div className="mt-8 space-y-6">
             {CADENCES.map((c) => {
-              const ids = orderedIds(c);
+              const ids = storedIds(c);
               if (ids.length === 0) return null;
+              const dragging = drag?.cadence === c;
+              const to = dragging ? clamp(drag!.from + Math.round(drag!.dy / drag!.rowH), 0, ids.length - 1) : -1;
               return (
                 <section key={c}>
                   <p className="text-xs font-semibold uppercase tracking-widest text-text-secondary">{CADENCE_LABELS[c]}</p>
                   <div className="mt-3 divide-y divide-border rounded-2xl border border-border">
-                    {ids.map((id) => {
+                    {ids.map((id, idx) => {
                       const it = byId.get(id);
                       if (!it) return null;
-                      const active = drag?.activeId === id;
+                      const isActive = dragging && drag!.activeId === id;
+
+                      // Position layer: instant translate (follows finger / makes room).
+                      let translate = 0;
+                      if (dragging && !isActive) {
+                        if (drag!.from < to && idx > drag!.from && idx <= to) translate = -drag!.rowH;
+                        else if (drag!.from > to && idx >= to && idx < drag!.from) translate = drag!.rowH;
+                      }
+                      const outerStyle: React.CSSProperties = isActive
+                        ? { transform: `translateY(${drag!.dy}px)`, transition: "none", zIndex: 30, position: "relative" }
+                        : { transform: `translateY(${translate}px)`, transition: "transform 200ms ease" };
+
                       return (
                         <div
                           key={id}
                           ref={(el) => { if (el) rowRefs.current.set(id, el); else rowRefs.current.delete(id); }}
-                          className={`flex select-none items-center gap-3 px-2 py-3 transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform ${
-                            active
-                              ? "relative z-20 scale-[1.05] rounded-xl bg-surface shadow-2xl shadow-black/50 ring-2 ring-brand"
-                              : "scale-100 bg-transparent"
-                          }`}
+                          style={outerStyle}
                         >
-                          <button
-                            type="button"
-                            aria-label="Drag to reorder"
-                            draggable={false}
-                            onPointerDown={(e) => onDragStart(e, c, id)}
-                            onPointerMove={onDragMove}
-                            onPointerUp={onDragEnd}
-                            onPointerCancel={onDragEnd}
-                            onContextMenu={(e) => e.preventDefault()}
-                            style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
-                            className="cursor-grab select-none px-1.5 text-text-secondary active:cursor-grabbing"
+                          {/* Visual layer: the springy "pop" on grab. */}
+                          <div
+                            className={`flex select-none items-center gap-3 px-2 py-3 transition-[transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] will-change-transform ${
+                              isActive
+                                ? "scale-[1.05] rounded-xl bg-surface shadow-2xl shadow-black/50 ring-2 ring-brand"
+                                : "scale-100"
+                            }`}
                           >
-                            <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden="true">
-                              <circle cx="4" cy="4" r="1.5" /><circle cx="10" cy="4" r="1.5" />
-                              <circle cx="4" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" />
-                              <circle cx="4" cy="16" r="1.5" /><circle cx="10" cy="16" r="1.5" />
-                            </svg>
-                          </button>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-white">
-                              {it.label}
-                              {it.draft && <span className="ml-2 rounded bg-yellow-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-300">DRAFT</span>}
-                              {it.critical && <span className="ml-2 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">CRITICAL</span>}
-                              {it.show_on_dashboard && <span className="ml-2 rounded bg-brand/20 px-1.5 py-0.5 text-[10px] font-semibold text-brand">DASH</span>}
-                            </p>
-                            <p className="text-xs text-text-secondary">
-                              {TYPE_LABEL[it.input_type]}
-                              {it.target != null && ` · target ${it.target}${it.unit ?? ""}`}
-                            </p>
+                            <button
+                              type="button"
+                              aria-label="Drag to reorder"
+                              draggable={false}
+                              onPointerDown={(e) => onDragStart(e, c, id)}
+                              onPointerMove={onDragMove}
+                              onPointerUp={onDragEnd}
+                              onPointerCancel={onDragEnd}
+                              onContextMenu={(e) => e.preventDefault()}
+                              style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+                              className="cursor-grab select-none px-1.5 text-text-secondary active:cursor-grabbing"
+                            >
+                              <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden="true">
+                                <circle cx="4" cy="4" r="1.5" /><circle cx="10" cy="4" r="1.5" />
+                                <circle cx="4" cy="10" r="1.5" /><circle cx="10" cy="10" r="1.5" />
+                                <circle cx="4" cy="16" r="1.5" /><circle cx="10" cy="16" r="1.5" />
+                              </svg>
+                            </button>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-white">
+                                {it.label}
+                                {it.draft && <span className="ml-2 rounded bg-yellow-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-300">DRAFT</span>}
+                                {it.critical && <span className="ml-2 rounded bg-red-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-red-300">CRITICAL</span>}
+                                {it.show_on_dashboard && <span className="ml-2 rounded bg-brand/20 px-1.5 py-0.5 text-[10px] font-semibold text-brand">DASH</span>}
+                              </p>
+                              <p className="text-xs text-text-secondary">
+                                {TYPE_LABEL[it.input_type]}
+                                {it.target != null && ` · target ${it.target}${it.unit ?? ""}`}
+                              </p>
+                            </div>
+                            <button type="button" className="text-xs font-semibold text-brand" onClick={() => setWizard({ item: it })}>Edit</button>
+                            <button type="button" className="text-xs font-semibold text-red-300" onClick={() => remove(it.id)}>Remove</button>
                           </div>
-                          <button type="button" className="text-xs font-semibold text-brand" onClick={() => setWizard({ item: it })}>Edit</button>
-                          <button type="button" className="text-xs font-semibold text-red-300" onClick={() => remove(it.id)}>Remove</button>
                         </div>
                       );
                     })}
